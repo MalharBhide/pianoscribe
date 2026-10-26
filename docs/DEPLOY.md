@@ -1,16 +1,22 @@
 # Deploying Piano Scribe to a website
 
-Pick one path. All run the same image: API on port 8000 + worker sharing
-one persistent disk. First visit: open the URL, transcribe an example,
-check `/health` and `/ready`.
+Pick one path. Every option runs the API and the transcription worker
+against ONE shared disk — the worker must see the same jobs database and
+audio files the API wrote, otherwise uploads queue forever. First visit:
+open the URL, transcribe an example, check `/health` and `/ready`.
+
+> Render disks and Fly volumes cannot be shared between separate
+> services/machines, so both blueprints run API + worker inside one
+> container via `scripts/start_all.sh` (honors `$PORT`). Do not split
+> them into two services without also moving jobs/storage to Postgres/S3.
 
 ## Option A: Render (easiest, no server to manage)
 
 1. Push this repo to GitHub (done: `MalharBhide/pianoscribe`).
-2. In Render: New → Blueprint → select the repo (`render.yaml` defines the
-   web service + worker + shared disk).
-3. Keep both services on the same plan with ≥1 GB RAM; deploy.
-4. Open the web service URL. The worker starts transcribing automatically.
+2. In Render: New → Blueprint → select the repo (`render.yaml` defines a
+   single web service: API + worker on one disk).
+3. Use a plan with ≥1 GB RAM; deploy.
+4. Open the service URL. The worker starts transcribing automatically.
 5. Tune env vars (`PIANO_SCRIBE_MAX_UPLOAD_MB`, …) in the dashboard.
 
 ## Option B: Fly.io (cheap, fast)
@@ -18,8 +24,8 @@ check `/health` and `/ready`.
 1. Install flyctl and `fly auth login`.
 2. `fly launch` (accepts the shipped `fly.toml`), then:
    `fly volumes create piano_data --size 10`.
-3. `fly deploy`. The `[processes]` section runs API + worker on shared
-   Machines with the mounted volume.
+3. `fly deploy`. The single `app` process runs API + worker together on
+   the mounted volume.
 4. `fly open` to use it; `fly logs` to watch jobs.
 
 ## Option C: Any VPS with Docker (most control)

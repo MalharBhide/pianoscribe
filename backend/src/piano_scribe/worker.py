@@ -85,9 +85,14 @@ def _child_main(job: dict, out_q: "mp.Queue") -> None:
         out_q.put(("crashed", f"{type(e).__name__}: {e}"))
 
 
-def run_job_supervised(job: dict, timeout_sec: float, max_attempts: int) -> str:
+def run_job_supervised(job: dict | str, timeout_sec: float, max_attempts: int) -> str:
     """Run a job with timeout + retry bookkeeping. Returns project id or ''."""
-    jid = job["id"]
+    if isinstance(job, str):
+        job = get_job(job) or {}
+    jid = job.get("id", "")
+    if not jid:
+        log.warning("run_job_supervised called for unknown job")
+        return ""
     ctx = mp.get_context("spawn")
     out_q: mp.Queue = ctx.Queue()
     proc = ctx.Process(target=_child_main, args=(job, out_q), daemon=True)

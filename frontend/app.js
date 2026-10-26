@@ -367,7 +367,12 @@ async function openProject(pid) {
     $("srcOrig").disabled = !S.hasAudio;
     $("srcOrig").title = S.hasAudio ? "" : "No playable recording on this score (e.g. MIDI import)";
     $("chatLog").innerHTML = "";
-    say("ai", "Ask about this score — chords, transposing, simplifying, looping. I'll propose each change before making it.");
+    if (!d.score.notes.length) {
+      say("ai", "I couldn't find confident notes in this recording, so the score is empty. A clearer recording — or the other mode on the home page — usually works better.");
+      toast("No confident notes found — the score is empty.", "err");
+    } else {
+      say("ai", "Ask about this score — chords, transposing, simplifying, looping. I'll propose each change before making it.");
+    }
     renderChips();
     refreshScoreView(d, true);
     setTab("score");

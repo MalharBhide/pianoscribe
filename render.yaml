@@ -1,11 +1,13 @@
 # One-click Render deploy: https://render.com/docs/blueprint-spec
-# Web service (API + frontend) + background worker sharing one disk.
+# Single web service running API + worker in one container on one disk.
+# (Render disks cannot be shared between services, so a separate worker
+# service would never see the API's jobs. See scripts/start_all.sh.)
 services:
   - type: web
-    name: piano-scribe-api
+    name: piano-scribe
     runtime: docker
     dockerfilePath: ./Dockerfile
-    dockerCommand: uvicorn piano_scribe.api:app --host 0.0.0.0 --port 8000 --workers 2
+    dockerCommand: ./scripts/start_all.sh
     plan: standard
     healthCheckPath: /health
     disk:
@@ -19,16 +21,3 @@ services:
         value: 50
       - key: PIANO_SCRIBE_MAX_DURATION_SEC
         value: 1800
-  - type: worker
-    name: piano-scribe-worker
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    dockerCommand: python -m piano_scribe.worker --poll 2
-    plan: standard
-    disk:
-      name: piano-scribe-data
-      mountPath: /data
-      sizeGB: 10
-    envVars:
-      - key: PIANO_SCRIBE_LOG_LEVEL
-        value: INFO

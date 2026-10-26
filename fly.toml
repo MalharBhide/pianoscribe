@@ -1,5 +1,7 @@
 # Fly.io deploy: `fly launch` (uses this file), `fly volumes create piano_data`,
-# `fly deploy`. API serves traffic; worker runs as a second process.
+# `fly deploy`. One machine runs API + worker together (scripts/start_all.sh)
+# because separate processes get separate machines/volumes and the worker
+# must share the API's disk.
 app = "piano-scribe"
 primary_region = "iad"
 
@@ -12,7 +14,6 @@ primary_region = "iad"
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
 
 [[http_service.checks]]
   interval = "30s"
@@ -21,8 +22,7 @@ primary_region = "iad"
   path = "/health"
 
 [processes]
-  app = "uvicorn piano_scribe.api:app --host 0.0.0.0 --port 8000 --workers 2"
-  worker = "python -m piano_scribe.worker --poll 2"
+  app = "./scripts/start_all.sh"
 
 [[vm]]
   memory = "1gb"
