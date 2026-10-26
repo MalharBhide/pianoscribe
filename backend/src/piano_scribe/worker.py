@@ -103,24 +103,32 @@ def run_job_supervised(job: dict, timeout_sec: float, max_attempts: int) -> str:
             proc.join(5)
         return _after_abort(jid, job.get("attempts", 1), max_attempts,
                             f"timed out after {timeout_sec:.0f}s", "timeout")
+    # The job row is the source of truth: a successful child always marks the
+    # job done before exiting, while the result queue can lag behind join()
+    # (feeder flush), so never let an empty queue override a done status.
+    wall = time.time() - t0
+    row = get_job(jid) or {}
+    if row.get("status") == "done":
+        log.info("job %s done in %.1fs project=%s", jid, wall, row.get("project_id"))
+        try:
+            out_q.get(timeout=10)
+        except Exception:  # noqa: BLE001 - stale queue entries are harmless
+            pass
+        return row.get("project_id") or ""
     result = None
     try:
-        result = out_q.get_nowait()
+        result = out_q.get(timeout=10)
     except Exception:  # noqa: BLE001 - empty queue means the child died silently
         pass
-    wall = time.time() - t0
     if result is None or result[0] == "crashed":
         reason = result[1] if result else f"worker process exited (code {proc.exitcode})"
         log.warning("job %s crashed after %.1fs: %s", jid, wall, reason)
         return _after_abort(jid, job.get("attempts", 1), max_attempts, reason, "crashed")
-    status = (get_job(jid) or {}).get("status")
-    if status == "done":
-        log.info("job %s done in %.1fs project=%s", jid, wall, result[1])
-        return result[1]
     # Child recorded its own failure (bad audio, limits, bugs): do not retry
     # blindly — retry only when attempts remain, since some failures are transient.
-    attempts = (get_job(jid) or {}).get("attempts", job.get("attempts", 1))
-    err = (get_job(jid) or {}).get("error", "failed")
+    row = get_job(jid) or {}
+    attempts = row.get("attempts", job.get("attempts", 1))
+    err = row.get("error", "failed")
     if attempts < max_attempts and _looks_transient(err):
         return _requeue(jid, f"retrying after transient failure ({err})")
     log.warning("job %s failed after %.1fs: %s", jid, wall, err)

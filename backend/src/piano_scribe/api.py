@@ -359,8 +359,10 @@ def api_project(request: Request, pid: str) -> Dict[str, Any]:
         raise HTTPException(404, "project not found")
     score = Score.from_dict(p["score"])
     svg = render_svg(score)
+    audio_ext = os.path.splitext(p.get("audio_path", ""))[1].lower()
     return {"id": p["id"], "title": p["title"], "mode": p["mode"],
             "audio_url": f"/api/projects/{pid}/audio",
+            "playable_audio": audio_ext in (".wav", ".mp3", ".flac"),
             "created_at": p["created_at"], "updated_at": p["updated_at"],
             "score": score.to_dict(), "svg": svg}
 
@@ -428,7 +430,8 @@ def api_audio(pid: str):
     if not p or not os.path.exists(p["audio_path"]):
         raise HTTPException(404, "audio not found")
     ext = os.path.splitext(p["audio_path"])[1].lower()
-    mt = "audio/mpeg" if ext == ".mp3" else "audio/wav"
+    mt = {".mp3": "audio/mpeg", ".flac": "audio/flac",
+          ".mid": "audio/midi", ".midi": "audio/midi"}.get(ext, "audio/wav")
     return FileResponse(p["audio_path"], media_type=mt)
 
 

@@ -18,8 +18,9 @@ const S = {
   showChords: true, showFing: true, handFilter: "both",
   loop: null, playing: false, source: "piano", speed: 1, t: 0, raf: 0,
   actx: null, master: null, gainL: null, gainR: null, playStartCtx: 0, playStartT: 0,
+  schedUntil: 0,
   pendingAction: null, chat: [], pollTimer: 0, scrubbing: false,
-  file: null, recording: null,
+  file: null, recording: null, hasAudio: true, workerOk: true, rollDragged: false,
 };
 
 async function api(path, opts) {
@@ -131,6 +132,20 @@ async function loadConfig() {
     $("sideLimits").textContent = `${c.max_upload_mb} MB · ${c.max_duration_min} min`;
     $("sideVer").textContent = "v" + c.app_version;
   } catch (e) { $("limitsLine").textContent = "Could not reach the server. Is it running?"; }
+  checkWorker();
+}
+async function checkWorker() {
+  // Surface a dead/missing background worker before the user waits on a job
+  // that will never start — the common "transcription never happens" cause.
+  try {
+    const r = await api("/ready");
+    S.workerOk = r.status === "ready";
+    const el = $("workerWarn");
+    if (S.workerOk) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = "The background worker isn't running, so new transcriptions will wait in line until one starts. " +
+      "Start it with <code>python -m piano_scribe.worker</code> next to the server, then come back here.";
+  } catch (e) { S.workerOk = false; }
 }
 
 /* ---------- home: upload ---------- */
@@ -156,8 +171,9 @@ async function startUpload() {
   fd.append("title", S.file.name.replace(/\.[^.]+$/, ""));
   try {
     const job = await api("/api/uploads", { method: "POST", body: fd });
+    const label = S.file ? `“${S.file.name}”` : "";
     setFile(null);
-    openProgress(job.job_id, S.file ? "" : "", true);
+    openProgress(job.job_id, label, true);
   } catch (e) { $("homeErr").textContent = e.message; }
   finally { $("startBtn").disabled = !S.file; }
 }
@@ -287,9 +303,17 @@ function openProgress(jid, label, isUpload) {
   $("progFile").textContent = label || "Your recording";
   $("progErr").textContent = "";
   clearInterval(S.pollTimer);
+  let polls = 0, queuedSince = Date.now();
   const poll = async () => {
     try {
       const j = await api("/api/jobs/" + jid);
+      polls++;
+      if (j.status !== "queued") queuedSince = Date.now();
+      else if (Date.now() - queuedSince > 8000 && polls % 5 === 0) {
+        try { const r = await api("/ready"); S.workerOk = r.status === "ready"; } catch (e) { S.workerOk = false; }
+        if (!S.workerOk) $("progErr").textContent = "Still waiting in line: no background worker is running. Start one with “python -m piano_scribe.worker” and this job will begin automatically.";
+        else $("progErr").textContent = "";
+      } else if (j.status !== "queued" && j.status !== "failed") $("progErr").textContent = "";
       $("progMode").textContent = `${j.mode === "arrangement" ? "Song-or-band arrangement" : "Piano transcription"} · ${j.density}`;
       const idx = stageIndex(j);
       const ol = $("stageList"); ol.innerHTML = "";
@@ -336,6 +360,12 @@ async function openProject(pid) {
       : '<span class="pill">Piano · transcription</span>';
     $("expVer").textContent = `Exports match score v${d.score.version}`;
     $("orig").src = d.audio_url;
+    S.hasAudio = d.playable_audio !== false;
+    S.source = "piano";
+    $("srcPiano").setAttribute("aria-pressed", "true");
+    $("srcOrig").setAttribute("aria-pressed", "false");
+    $("srcOrig").disabled = !S.hasAudio;
+    $("srcOrig").title = S.hasAudio ? "" : "No playable recording on this score (e.g. MIDI import)";
     $("chatLog").innerHTML = "";
     say("ai", "Ask about this score — chords, transposing, simplifying, looping. I'll propose each change before making it.");
     renderChips();
@@ -513,6 +543,7 @@ function renderRoll() {
     r.append(title);
     r.addEventListener("click", (e) => {
       e.stopPropagation();
+      if (S.rollDragged) { S.rollDragged = false; return; }
       if (e.shiftKey) { S.selection.has(n.id) ? S.selection.delete(n.id) : S.selection.add(n.id); }
       else { S.selection = new Set([n.id]); }
       seek(n.start_sec); updateSelUI(); renderRoll();
@@ -556,13 +587,14 @@ function startRollDrag(e, n, svg, g) {
     n.pitch = Math.max(21, Math.min(108, origP + dp));
     renderRoll();
   };
-  const up = async () => {
+  const up = async (ev) => {
     window.removeEventListener("pointermove", move);
     window.removeEventListener("pointerup", up);
     // restore + persist through the server so history/undo stay correct
     const patch = { pitch: n.pitch, start_sec: n.start_sec, end_sec: n.end_sec };
     n.start_sec = origS; n.end_sec = origE; n.pitch = origP;
     if (patch.pitch !== origP || Math.abs(patch.start_sec - origS) > 0.005) {
+      S.rollDragged = true;
       await noteOp({ op: "update", id: n.id, patch, label: "drag note" });
     } else renderRoll();
   };
@@ -580,7 +612,7 @@ function dur() {
 function updateTime() {
   $("timeCur").textContent = fmtT(S.t);
   $("timeTot").textContent = fmtT(dur());
-  if (!S.scrubbing) $("seek").value = Math.round((S.t / dur()) * 1000);
+  if (!S.scrubbing) $("seek").value = dur() > 0 ? Math.round((S.t / dur()) * 1000) : 0;
 }
 function ensureCtx() {
   if (!S.actx) {
@@ -617,13 +649,30 @@ function schedulePiano(fromT) {
   const ctx = ensureCtx();
   const t0 = ctx.currentTime + 0.06;
   S.playStartCtx = t0; S.playStartT = fromT;
+  const horizon = fromT + 90;
   S.score.notes.forEach((x) => {
-    if (x.end_sec <= fromT) return;
+    if (x.end_sec <= fromT || x.start_sec >= horizon) return;
     const dest = x.hand === "L" ? S.gainL : S.gainR;
     const start = Math.max(x.start_sec, fromT);
     pianoTone(ctx, dest, x.pitch, t0 + (start - fromT) / S.speed,
       (x.end_sec - start) / S.speed, x.velocity);
   });
+  S.schedUntil = horizon;
+}
+function schedulePianoMore() {
+  // Top up the schedule window during long playback so a 30-minute score
+  // never instantiates tens of thousands of oscillators at once.
+  const ctx = S.actx;
+  if (!ctx || !S.score) return;
+  const horizon = Math.min(dur(), S.schedUntil + 60);
+  S.score.notes.forEach((x) => {
+    if (x.start_sec < S.schedUntil || x.start_sec >= horizon) return;
+    const when = S.playStartCtx + (x.start_sec - S.playStartT) / S.speed;
+    if (when < ctx.currentTime - 0.1) return;
+    const dest = x.hand === "L" ? S.gainL : S.gainR;
+    pianoTone(ctx, dest, x.pitch, when, (x.end_sec - x.start_sec) / S.speed, x.velocity);
+  });
+  S.schedUntil = horizon;
 }
 function stopVoices() { if (S.actx) { S.actx.close().catch(() => {}); S.actx = null; } }
 function setPlayIcon() {
@@ -645,7 +694,10 @@ function play() {
   const tick = () => {
     if (!S.playing) return;
     if (S.source === "original") S.t = $("orig").currentTime;
-    else if (S.actx) S.t = S.playStartT + (S.actx.currentTime - S.playStartCtx) * S.speed;
+    else if (S.actx) {
+      S.t = S.playStartT + (S.actx.currentTime - S.playStartCtx) * S.speed;
+      if (S.t > S.schedUntil - 30 && S.schedUntil < dur()) schedulePianoMore();
+    }
     if (S.loop && S.t >= S.loop.b) seek(S.loop.a);
     if (S.t >= dur()) { stop(); seek(0); return; }
     updateTime(); updateCursor();
@@ -973,7 +1025,10 @@ function init() {
     catch (e) { toast(e.message, "err"); } };
   $("mDelete").onclick = async () => { closeMenus();
     if (!await confirmDialog("Delete this score?", "The score and its audio will be removed. This can't be undone.", "Delete")) return;
-    try { await api(`/api/projects/${S.pid}`, { method: "DELETE" }); S.pid = null; S.score = null; stop(); go("library"); toast("Deleted.", "ok"); }
+    try { await api(`/api/projects/${S.pid}`, { method: "DELETE" });
+      S.pid = null; S.proj = null; S.score = null; S.t = 0; S.selection.clear();
+      $("saveState").textContent = "No score open."; $("crumbSub").textContent = "";
+      stop(); go("library"); toast("Deleted.", "ok"); }
     catch (e) { toast(e.message, "err"); } };
   // panel tabs
   const ptabs = [["ptabEdit", "panelEdit"], ["ptabAssist", "panelAssist"], ["ptabDetails", "panelDetails"]];
@@ -1024,7 +1079,10 @@ function init() {
     $("srcOrig").setAttribute("aria-pressed", which === "original");
     if (S.playing) { const t = S.t; stop(); S.t = t; play(); } };
   $("srcPiano").onclick = () => src("piano");
-  $("srcOrig").onclick = () => src("original");
+  $("srcOrig").onclick = () => {
+    if (!S.hasAudio) { toast("This score has no playable recording — piano playback only.", "err"); return; }
+    src("original");
+  };
   $("speed").oninput = () => { $("speedV").textContent = $("speed").value + "%"; S.speed = $("speed").value / 100;
     if (S.playing && S.source === "original") $("orig").playbackRate = S.speed; };
   $("loopBtn").onclick = toggleLoop;
