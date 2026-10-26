@@ -4,9 +4,13 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      PIANO_SCRIBE_LOG_LEVEL: INFO
     volumes:
-      - ./storage:/data/storage
+      - piano-scribe-data:/data/storage
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 30s
@@ -16,6 +20,17 @@ services:
     build: .
     command: ["python", "-m", "piano_scribe.worker", "--poll", "2"]
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      PIANO_SCRIBE_LOG_LEVEL: INFO
     volumes:
-      - ./storage:/data/storage
+      - piano-scribe-data:/data/storage
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+volumes:
+  piano-scribe-data:

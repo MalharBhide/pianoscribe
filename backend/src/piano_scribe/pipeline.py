@@ -1,6 +1,7 @@
 """Pipeline: ingest -> transcribe (+arrange) -> quantize -> Score + artifacts."""
 from __future__ import annotations
 
+import json
 import os
 import time
 from typing import Any, Callable, Dict, List, Optional
@@ -11,8 +12,11 @@ from . import PROCESSING_VERSION
 from .audio_ingest import AudioError, iter_windows, load_audio, merge_window_notes
 from .audio_models import REGISTRY
 from .config import get_limits
-from .notation import assign_hands_piano, quantize
+from .fingering import suggest_fingering
+from .notation import (assign_hands_piano, quantize, render_svg, to_midi_bytes,
+                       to_musicxml, to_pdf_bytes)
 from .score import Note, Score, TempoMap, new_id
+from .store import artifact_dir
 
 
 def transcribe_signal(mono: np.ndarray, sr: int, mode: str, density: str,
@@ -114,11 +118,35 @@ def build_score(audio_path: str, mode: str, density: str, title: str,
         "mode": mode, "density": density, "audio": info.to_dict(),
         "windows": main["windows"], "processing_version": PROCESSING_VERSION,
     }
+    score.chords = [
+        {"start_sec": round(float(c["start_sec"]), 3), "end_sec": round(float(c["end_sec"]), 3),
+         "label": str(c["label"]), "score": float(c.get("score", 0)), "root": int(c.get("root", 0))}
+        for c in main.get("chords", []) if c.get("label") != "unknown"
+    ]
     if mode == "piano":
         assign_hands_piano(score)
     quantize(score)
+    suggest_fingering(score)
     timing = {"total_sec": round(time.time() - t0, 2),
               "audio_sec": round(info.duration_sec, 2)}
     if progress:
         progress(1.0, "done")
     return {"score": score, "audio_info": info.to_dict(), "timing": timing}
+
+
+def write_artifacts(pid: str, score: Score, timing: Dict[str, Any]) -> str:
+    """Write score.json/svg/mid/musicxml/pdf/timing.json for a project."""
+    ad = artifact_dir(pid)
+    with open(os.path.join(ad, "score.json"), "w") as f:
+        json.dump(score.to_dict(), f)
+    with open(os.path.join(ad, "score.svg"), "w") as f:
+        f.write(render_svg(score))
+    with open(os.path.join(ad, "score.mid"), "wb") as f:
+        f.write(to_midi_bytes(score))
+    with open(os.path.join(ad, "score.musicxml"), "w") as f:
+        f.write(to_musicxml(score))
+    with open(os.path.join(ad, "score.pdf"), "wb") as f:
+        f.write(to_pdf_bytes(score))
+    with open(os.path.join(ad, "timing.json"), "w") as f:
+        json.dump(timing, f)
+    return ad

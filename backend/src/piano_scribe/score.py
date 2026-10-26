@@ -28,6 +28,7 @@ class Note:
     provenance: str = "detected"  # detected|arranged|user-edited
     beat_onset: Optional[float] = None  # notation position (quantized)
     beat_dur: Optional[float] = None  # notated duration in beats
+    finger: Optional[int] = None  # suggested fingering 1-5 (None = none)
     evidence: Dict[str, Any] = field(default_factory=dict)
 
     def dur_sec(self) -> float:
@@ -44,7 +45,7 @@ class Note:
 _NOTE_DEFAULTS = {
     "id": "", "pitch": 60, "start_sec": 0.0, "end_sec": 0.0, "velocity": 80,
     "hand": "R", "role": "unknown", "provenance": "detected",
-    "beat_onset": None, "beat_dur": None, "evidence": {},
+    "beat_onset": None, "beat_dur": None, "finger": None, "evidence": {},
 }
 
 
@@ -73,6 +74,7 @@ class Score:
     time_sig: str = "4/4"
     title: str = "Untitled"
     mode: str = "piano"  # piano | arrangement
+    chords: List[Dict[str, Any]] = field(default_factory=list)
     raw_detections: List[Dict[str, Any]] = field(default_factory=list)
     processing: Dict[str, Any] = field(default_factory=dict)
     history: List[Dict[str, Any]] = field(default_factory=list)  # undo stack
@@ -87,6 +89,7 @@ class Score:
             "time_sig": self.time_sig,
             "title": self.title,
             "mode": self.mode,
+            "chords": self.chords,
             "raw_detections": self.raw_detections,
             "processing": self.processing,
             "history": self.history[-50:],
@@ -102,6 +105,7 @@ class Score:
         s.time_sig = d.get("time_sig", "4/4")
         s.title = d.get("title", "Untitled")
         s.mode = d.get("mode", "piano")
+        s.chords = list(d.get("chords", []))
         s.raw_detections = list(d.get("raw_detections", []))
         s.processing = dict(d.get("processing", {}))
         s.history = list(d.get("history", []))
@@ -153,7 +157,7 @@ class Score:
         if n is None:
             return None
         pre = self._snapshot()
-        for k in ("pitch", "start_sec", "end_sec", "velocity", "hand", "role"):
+        for k in ("pitch", "start_sec", "end_sec", "velocity", "hand", "role", "finger"):
             if k in patch:
                 setattr(n, k, patch[k])
         n.pitch = max(0, min(127, int(n.pitch)))

@@ -1,0 +1,39 @@
+# Fly.io deploy: `fly launch` (uses this file), `fly volumes create piano_data`,
+# `fly deploy`. API serves traffic; worker runs as a second process.
+app = "piano-scribe"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  method = "GET"
+  path = "/health"
+
+[processes]
+  app = "uvicorn piano_scribe.api:app --host 0.0.0.0 --port 8000 --workers 2"
+  worker = "python -m piano_scribe.worker --poll 2"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[mounts]]
+  source = "piano_data"
+  destination = "/data"
+
+[env]
+  PIANO_SCRIBE_LOG_LEVEL = "INFO"
+  PIANO_SCRIBE_MAX_UPLOAD_MB = "50"
+  PIANO_SCRIBE_MAX_DURATION_SEC = "1800"

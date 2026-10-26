@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Tuple
 
 
 def _int(name: str, default: int) -> int:
@@ -17,6 +18,10 @@ def _float(name: str, default: float) -> float:
         return float(os.environ.get(name, str(default)))
     except ValueError:
         return default
+
+
+def _str(name: str, default: str) -> str:
+    return os.environ.get(name, default)
 
 
 @dataclass(frozen=True)
@@ -37,6 +42,35 @@ def get_limits() -> Limits:
         target_sr=_int("PIANO_SCRIBE_TARGET_SR", 22050),
         window_sec=_float("PIANO_SCRIBE_WINDOW_SEC", 30.0),
         overlap_sec=_float("PIANO_SCRIBE_OVERLAP_SEC", 5.0),
+    )
+
+
+@dataclass(frozen=True)
+class Settings:
+    log_level: str = "INFO"
+    cors_origins: Tuple[str, ...] = ()
+    rate_uploads_per_min: int = 60
+    rate_requests_per_min: int = 600
+    job_timeout_sec: float = 3600.0
+    job_max_attempts: int = 3
+    worker_poll_sec: float = 2.0
+    worker_stale_sec: float = 120.0
+    request_body_log: bool = False
+
+
+def get_settings() -> Settings:
+    origins = tuple(
+        o.strip() for o in _str("PIANO_SCRIBE_CORS_ORIGINS", "").split(",") if o.strip()
+    )
+    return Settings(
+        log_level=_str("PIANO_SCRIBE_LOG_LEVEL", "INFO").upper(),
+        cors_origins=origins,
+        rate_uploads_per_min=_int("PIANO_SCRIBE_RATE_UPLOADS_PER_MIN", 60),
+        rate_requests_per_min=_int("PIANO_SCRIBE_RATE_REQUESTS_PER_MIN", 600),
+        job_timeout_sec=_float("PIANO_SCRIBE_JOB_TIMEOUT_SEC", 3600.0),
+        job_max_attempts=max(1, _int("PIANO_SCRIBE_JOB_MAX_ATTEMPTS", 3)),
+        worker_poll_sec=_float("PIANO_SCRIBE_WORKER_POLL_SEC", 2.0),
+        worker_stale_sec=_float("PIANO_SCRIBE_WORKER_STALE_SEC", 120.0),
     )
 
 

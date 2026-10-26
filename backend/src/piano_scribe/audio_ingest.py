@@ -132,16 +132,16 @@ def load_audio(path: str, target_sr: int = 22050,
     if ext in (".wav", ".wave"):
         pcm, src_sr, nch, decoder = _decode_wav(path)
         codec = "wav"
-    elif ext == ".mp3":
+    elif ext in (".mp3", ".flac", ".ogg", ".oga"):
         pcm, src_sr, nch, decoder = _decode_miniaudio(path)
-        codec = "mp3"
+        codec = ext.lstrip(".")
     else:
         # Try generic decode before rejecting (extension is not the verdict).
         try:
             pcm, src_sr, nch, decoder = _decode_miniaudio(path)
             codec = ext.lstrip(".") or "unknown"
         except AudioError:
-            raise AudioError(f"unsupported file type '{ext or '(none)'}': upload MP3 or WAV")
+            raise AudioError(f"unsupported file type '{ext or '(none)'}': upload MP3, WAV, or FLAC")
     if src_sr <= 0:
         raise AudioError("invalid sample rate in file")
     n_src = len(pcm)

@@ -75,13 +75,24 @@ def parse_command(text: str, score: Score, selection: List[str]) -> Dict[str, An
             semis = -abs(semis)
         elif "up" in t:
             semis = abs(semis)
-        ids = [n.id for n in score.notes if n.id in selection]
-        if not ids:
-            return {"reply": "Select one or more notes first, then ask me to transpose them.", "actions": []}
         if abs(semis) > 24:
             return {"reply": "Transpose range is limited to ±24 semitones.", "actions": []}
+        if re.search(r"\b(everything|whole|entire|all)\b", t):
+            return {"reply": f"Ready to transpose the whole score ({len(score.notes)} notes) by {semis:+d} semitones. Preview and confirm to apply (undo available).",
+                    "actions": [{"type": "transpose_all", "semitones": semis}]}
+        ids = [n.id for n in score.notes if n.id in selection]
+        if not ids:
+            return {"reply": "Select one or more notes first, then ask me to transpose them — or say 'transpose everything' for the whole score.", "actions": []}
         return {"reply": f"Ready to transpose {len(ids)} note(s) by {semis:+d} semitones. Preview and confirm to apply (undo available).",
                 "actions": [{"type": "transpose", "ids": ids, "semitones": semis}]}
+    m = re.search(r"(show|hide)\s+(chord symbols|chords|finger numbers|fingering|fingers)", t)
+    if m:
+        show = m.group(1) == "show"
+        what = "chords" if "chord" in m.group(2) else "fingering"
+        verb = "Showing" if show else "Hiding"
+        noun = "chord symbols" if what == "chords" else "finger numbers"
+        return {"reply": f"{verb} {noun} on the score.",
+                "actions": [{"type": "display", "key": what, "value": show}]}
     m = re.search(r"left hand.*?measures? (\d+)\s*[–\-to ]+\s*(\d+).*simpl", t) or \
         re.search(r"simpl.*left hand.*?measures? (\d+)\s*[–\-to ]+\s*(\d+)", t)
     if m and "simpl" in t:
@@ -102,8 +113,8 @@ def parse_command(text: str, score: Score, selection: List[str]) -> Dict[str, An
         pct = max(25, min(100, pct))
         return {"reply": f"Looping the selection at {pct}% speed. Press play to hear it.",
                 "actions": [{"type": "loop", "speed": pct / 100.0}]}
-    return {"reply": ("I can: explain the chord in measure N · transpose the selection (±N semitones) · "
-                      "simplify the left hand in measures A–B · loop the selection at N% speed. "
+    return {"reply": ("I can: explain the chord in measure N · transpose the selection or everything · "
+                      "simplify the left hand in measures A–B · loop at N% speed · show or hide chord symbols and finger numbers. "
                       "I only change the score after you confirm, and every change can be undone."),
             "actions": []}
 
@@ -129,7 +140,23 @@ def apply_action(score: Score, action: Dict[str, Any]) -> Dict[str, Any]:
         if not ids or not (-24 <= semis <= 24):
             return {"ok": False, "message": "Invalid transpose action."}
         n = score.transpose(ids, semis)
-        return {"ok": True, "message": f"Transposed {n} note(s) by {semis:+d} semitones.", "affected": ids}
+        return {"ok": True, "changed": True,
+                "message": f"Transposed {n} note(s) by {semis:+d} semitones.", "affected": ids}
+    if atype == "transpose_all":
+        semis = int(action.get("semitones", 0))
+        if not score.notes or not (-24 <= semis <= 24):
+            return {"ok": False, "message": "Invalid transpose action."}
+        ids = [n.id for n in score.notes]
+        n = score.transpose(ids, semis)
+        return {"ok": True, "changed": True,
+                "message": f"Transposed the whole score ({n} notes) by {semis:+d} semitones.",
+                "affected": ids}
+    if atype == "display":
+        key, value = action.get("key"), bool(action.get("value"))
+        if key not in ("chords", "fingering"):
+            return {"ok": False, "message": "Invalid display action."}
+        return {"ok": True, "changed": False, "display": {"key": key, "value": value},
+                "message": f"{'Showing' if value else 'Hiding'} {key}."}
     if atype == "simplify_lh":
         drop = [i for i in action.get("drop_ids", []) if score.get(i)]
         # Safety: only delete LH notes, never melody-role notes.
@@ -137,5 +164,6 @@ def apply_action(score: Score, action: Dict[str, Any]) -> Dict[str, Any]:
         if not drop:
             return {"ok": False, "message": "Nothing safe to simplify (melody notes are protected)."}
         score.delete_notes(drop)
-        return {"ok": True, "message": f"Simplified left hand: removed {len(drop)} tone(s).", "affected": drop}
+        return {"ok": True, "changed": True,
+                "message": f"Simplified left hand: removed {len(drop)} tone(s).", "affected": drop}
     return {"ok": False, "message": f"Unknown action '{atype}'."}

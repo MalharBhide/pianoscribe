@@ -331,7 +331,10 @@ class BaselinePianoTranscriber(Transcriber):
         if progress:
             progress(0.9, "beats")
         beats, bpm = estimate_beats(flux, times, sr)
-        return TranscriptionResult(notes=notes, beats=beats, bpm=bpm, meta=self._meta(cfg))
+        anchors = beats[::2] if beats else list(np.arange(0, times[-1] + 1, 2.0))
+        chords = estimate_chords(sal, mids, times, [float(a) for a in anchors])
+        return TranscriptionResult(notes=notes, beats=beats, bpm=bpm,
+                                   chords=chords, meta=self._meta(cfg))
 
     def _meta(self, cfg: Dict[str, Any]) -> Dict[str, Any]:
         return {"model": self.name, "model_version": self.version,
@@ -401,6 +404,39 @@ CHORD_TEMPLATES = {
     "maj": [0, 4, 7], "min": [0, 3, 7], "dim": [0, 3, 6],
     "aug": [0, 4, 8], "7": [0, 4, 7, 10], "maj7": [0, 4, 7, 11], "m7": [0, 3, 7, 10],
 }
+
+
+def estimate_chords(sal: np.ndarray, mids: np.ndarray, times: np.ndarray,
+                    anchors: List[float]) -> List[Dict[str, Any]]:
+    """Chroma-template chord labels per anchor span (shared by both modes)."""
+    chroma_frames = np.zeros((sal.shape[0], 12), dtype=np.float32)
+    for j, m in enumerate(mids):
+        chroma_frames[:, int(m) % 12] += sal[:, j]
+    chords: List[Dict[str, Any]] = []
+    for i, t0 in enumerate(anchors):
+        t1 = anchors[i + 1] if i + 1 < len(anchors) else (times[-1] if len(times) else t0 + 1)
+        sel = (times >= t0) & (times < t1)
+        if not sel.any():
+            continue
+        vec = chroma_frames[sel].mean(axis=0)
+        if vec.max() <= 0:
+            continue
+        vec = vec / vec.max()
+        best: Tuple[str, int, float] = ("unknown", 0, 0.0)
+        for root in range(12):
+            for cname, ivals in CHORD_TEMPLATES.items():
+                tmpl = np.zeros(12)
+                for iv in ivals:
+                    tmpl[(root + iv) % 12] = 1.0
+                score = float(np.dot(vec, tmpl) / (np.linalg.norm(tmpl) + 1e-9)
+                              - 0.35 * np.dot(vec, 1 - tmpl) / 12.0)
+                if score > best[2]:
+                    best = (cname, root, score)
+        label = "unknown" if best[2] < 0.45 else f"{best[1]}:{best[0]}"
+        chords.append({"start_sec": float(t0), "end_sec": float(t1),
+                       "label": label, "score": round(float(best[2]), 3),
+                       "root": int(best[1])})
+    return chords
 
 
 class BaselineArranger(Transcriber):
@@ -493,34 +529,7 @@ class BaselineArranger(Transcriber):
 
     def _chords(self, sal: np.ndarray, mids: np.ndarray, times: np.ndarray,
                 anchors: List[float]) -> List[Dict[str, Any]]:
-        chroma_frames = np.zeros((sal.shape[0], 12), dtype=np.float32)
-        for j, m in enumerate(mids):
-            chroma_frames[:, int(m) % 12] += sal[:, j]
-        chords: List[Dict[str, Any]] = []
-        for i, t0 in enumerate(anchors):
-            t1 = anchors[i + 1] if i + 1 < len(anchors) else (times[-1] if len(times) else t0 + 1)
-            sel = (times >= t0) & (times < t1)
-            if not sel.any():
-                continue
-            vec = chroma_frames[sel].mean(axis=0)
-            if vec.max() <= 0:
-                continue
-            vec = vec / vec.max()
-            best: Tuple[str, int, float] = ("unknown", 0, 0.0)
-            for root in range(12):
-                for cname, ivals in CHORD_TEMPLATES.items():
-                    tmpl = np.zeros(12)
-                    for iv in ivals:
-                        tmpl[(root + iv) % 12] = 1.0
-                    score = float(np.dot(vec, tmpl) / (np.linalg.norm(tmpl) + 1e-9)
-                                  - 0.35 * np.dot(vec, 1 - tmpl) / 12.0)
-                    if score > best[2]:
-                        best = (cname, root, score)
-            label = "unknown" if best[2] < 0.45 else f"{best[1]}:{best[0]}"
-            chords.append({"start_sec": float(t0), "end_sec": float(t1),
-                           "label": label, "score": round(float(best[2]), 3),
-                           "root": int(best[1])})
-        return chords
+        return estimate_chords(sal, mids, times, anchors)
 
     def _arrange(self, mel: List[Dict[str, Any]], bass: List[Dict[str, Any]],
                  chords: List[Dict[str, Any]], density: str) -> List[Dict[str, Any]]:

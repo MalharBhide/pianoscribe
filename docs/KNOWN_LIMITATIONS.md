@@ -44,7 +44,13 @@ Full per-recording numbers: `reports/eval_baseline.json`.
    metrics, budget).
 9. **Single-node deployment.** SQLite queue + local disk; scale-out needs
    the Postgres/S3 swap (interfaces are already separated: `store.py` +
-   `artifact_dir`/`audio_dir`).
-10. **Assistant is rule-based** in the slice (four command families). It
-    proposes validated actions with preview + undo; it never edits silently
-    and never judges accuracy.
+   `artifact_dir`/`audio_dir`). No auth ships — see `PRODUCTION.md`.
+10. **Assistant is rule-based** (transpose, simplify, loop, display, chord
+    questions). It proposes validated actions with preview + undo; it never
+    edits silently and never judges accuracy.
+11. **Fingering is a heuristic** (greedy, per-hand). Sensible for scales,
+    arpeggios, and simple chords; review before printing parts.
+12. **No link imports.** YouTube/TikTok URLs, video files, AAC/M4A, OMR,
+    other instruments, and tabs are out of scope (see `COMPETITORS.md`).
+13. **MIDI import** skips drum-channel notes and derives hands/chords by
+    rule; complex multi-instrument files collapse to one piano score.

@@ -3,132 +3,297 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Piano Scribe</title>
-<style>
-:root{--bg:#eef1f4;--panel:#fff;--ink:#23272e;--muted:#5d6672;--accent:#2a5db0;--accent-soft:#e8eefb;--warn:#b05a2a;--line:#dde2e8}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif}
-header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-header h1{font-size:19px;margin:0}header h1 span{color:var(--accent)}
-header .sub{color:var(--muted);font-size:13px}
-main{max-width:1180px;margin:0 auto;padding:16px;display:grid;gap:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-label{font-size:13px;color:var(--muted)}select,input[type=text],input[type=number]{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
-button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button:disabled{opacity:.45;cursor:default}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted);background:#f5f7fa}
-#drop.over{border-color:var(--accent);background:var(--accent-soft)}
-#limits{font-size:13px;color:var(--muted);margin-top:8px}
-#progress{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin-top:10px;display:none}
-#progress>div{height:100%;width:0;background:var(--accent)}
-#stage{font-size:13px;color:var(--muted);margin-top:6px}
-#scoreWrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:8px;background:#fff}
-#scoreWrap svg{width:100%;height:auto;display:block}
-.notehead.sel{stroke:var(--warn);stroke-width:2.5}
-.measure-hit{cursor:pointer}
-#cursorLine{stroke:#d33;stroke-width:2;pointer-events:none}
-#transport{position:sticky;bottom:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-#time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:110px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:860px){.grid2{grid-template-columns:1fr}}
-.pill{font-size:12px;padding:2px 10px;border-radius:20px;background:var(--accent-soft);color:var(--accent)}
-.pill.arr{background:#eaf6ec;color:#1e7a34}.pill small{opacity:.7}
-.legend{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
-#assistReply{font-size:14px;background:#f5f7fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;min-height:44px}
-#actionCard{border:1px solid var(--warn);border-radius:8px;padding:10px;margin-top:8px;display:none}
-.err{color:#a33;font-size:13px;margin-top:6px}.ok{color:#1e7a34;font-size:13px;margin-top:6px}
-details{font-size:13px;color:var(--muted)}summary{cursor:pointer}
-#projects li{margin:4px 0}#projects a{color:var(--accent);cursor:pointer}
-.muted{color:var(--muted);font-size:13px}
-</style>
+<title>Piano Scribe — recordings to piano sheet music</title>
+<meta name="description" content="Turn MP3 or WAV recordings into readable, editable piano sheet music.">
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<header>
-<h1>𝄞 Piano <span>Scribe</span></h1>
-<div class="sub">Upload a recording → get a readable, editable piano score.</div>
-<div class="sub" id="modeBadge"></div>
-</header>
-<main>
-<section class="card" aria-label="Upload">
-<div class="row">
-<label>Mode <select id="mode" aria-label="Transcription mode">
-<option value="piano">Piano transcription (recording has piano)</option>
-<option value="arrangement">Song-to-piano arrangement (band/vocals)</option>
-</select></label>
-<label>Accompaniment <select id="density" aria-label="Arrangement density">
-<option value="simple">Simple</option><option value="standard" selected>Standard</option><option value="detailed">Detailed</option>
-</select></label>
-<span class="muted">Density changes voicing fullness, not accuracy.</span>
-</div>
-<div id="drop">Drop MP3 or WAV here, or <button id="browse" type="button">Choose file</button>
-<input type="file" id="file" accept=".mp3,.wav,audio/mpeg,audio/wav" hidden></div>
-<div id="limits">Loading limits…</div>
-<div id="progress" role="progressbar" aria-label="Processing progress"><div></div></div>
-<div id="stage"></div><div class="err" id="upErr"></div>
-</section>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-logo" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#2456a6"/><circle cx="12" cy="20" r="4" fill="#fff"/><rect x="15" y="6" width="2.6" height="14" fill="#fff"/><path d="M15 6c4 0 7 2 8 5-2-2-5-3-8-3z" fill="#fff"/></symbol>
+<symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-lib" viewBox="0 0 16 16"><path d="M2 3h4l1.5 2H14v8H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="i-book" viewBox="0 0 16 16"><path d="M3 2h8a2 2 0 012 2v12H5a2 2 0 01-2-2z M3 12h10" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="i-play" viewBox="0 0 16 16"><path d="M4 2l9 6-9 6z" fill="currentColor"/></symbol>
+<symbol id="i-pause" viewBox="0 0 16 16"><path d="M4 2h3v12H4zM9 2h3v12H9z" fill="currentColor"/></symbol>
+<symbol id="i-stop" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor"/></symbol>
+<symbol id="i-back5" viewBox="0 0 16 16"><path d="M8 3a5 5 0 105 5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 1L4.5 3.5 8 6z" fill="currentColor"/></symbol>
+<symbol id="i-fwd5" viewBox="0 0 16 16"><path d="M8 3a5 5 0 11-5 5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 1l3.5 2.5L8 6z" fill="currentColor"/></symbol>
+<symbol id="i-loop" viewBox="0 0 16 16"><path d="M12 5H4a2 2 0 00-2 2v1m0 3h8a2 2 0 002-2V8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 6.5L2 8l2.5 1.5z M11.5 6.5L14 8l-2.5 1.5z" fill="currentColor"/></symbol>
+<symbol id="i-down" viewBox="0 0 16 16"><path d="M8 2v9M4 7l4 4 4-4M2 13h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-pen" viewBox="0 0 16 16"><path d="M11 2l3 3L5 14H2v-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="i-trash" viewBox="0 0 16 16"><path d="M2 4h12M6 4V2h4v2M4 4l1 10h6l1-10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="i-copy" viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 5V3a1 1 0 00-1-1H3a1 1 0 00-1 1v7a1 1 0 001 1h2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="i-check" viewBox="0 0 16 16"><path d="M2 8.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-chat" viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 7v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="4.8" r="1.1" fill="currentColor"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 16 16"><path d="M2 5h12M2 11h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="6" cy="5" r="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="11" r="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="i-undo" viewBox="0 0 16 16"><path d="M6 3L2 7l4 4M2 7h7a4 4 0 010 8h-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-redo" viewBox="0 0 16 16"><path d="M10 3l4 4-4 4M14 7H7a4 4 0 000 8h2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 6a2 2 0 114 0c0 1.5-2 2-2 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="12" r="1" fill="currentColor"/></symbol>
+<symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-eye" viewBox="0 0 16 16"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></symbol>
+<symbol id="i-warn" viewBox="0 0 16 16"><path d="M8 2L15 14H1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 6.5V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="12" r="1" fill="currentColor"/></symbol>
+</defs>
+</svg>
 
-<section class="card" aria-label="Score">
-<div class="row"><strong id="projTitle">No score yet</strong><span id="scoreMeta" class="muted"></span>
-<span style="flex:1"></span>
-<button id="expMid" disabled>MIDI</button><button id="expXml" disabled>MusicXML</button><button id="expPdf" disabled>PDF</button>
-</div>
-<div class="legend"><span><i class="dot" style="background:#1a1a1a"></i>detected</span>
-<span><i class="dot" style="background:#2a5db0"></i>arranged</span>
-<span><i class="dot" style="background:#b05a2a"></i>edited by you</span></div>
-<div id="scoreWrap" aria-label="Piano score"><p class="muted" style="padding:16px">Upload a recording to see your score here.</p></div>
-<details style="margin-top:8px"><summary>Processing details (model &amp; version)</summary><pre id="procInfo" class="muted"></pre></details>
-</section>
+<div id="app">
+  <aside id="side" aria-label="Primary">
+    <button id="brand" data-go="home" aria-label="Piano Scribe home">
+      <svg class="ic logo"><use href="#i-logo"/></svg>
+      <span class="brand-name">Piano Scribe</span>
+    </button>
+    <nav id="sideNav">
+      <button class="navbtn" data-go="home"><svg class="ic"><use href="#i-plus"/></svg><span>New score</span></button>
+      <button class="navbtn" data-go="library"><svg class="ic"><use href="#i-lib"/></svg><span>Library</span><em id="libCount"></em></button>
+      <button class="navbtn" data-go="guide"><svg class="ic"><use href="#i-book"/></svg><span>Guide</span></button>
+    </nav>
+    <div id="sideFoot">
+      <div class="muted small" id="sideLimits">…</div>
+      <div class="muted small" id="sideVer"></div>
+    </div>
+  </aside>
 
-<div id="transport" role="group" aria-label="Playback">
-<button id="play" class="primary" disabled aria-label="Play or pause">▶ Play</button>
-<button id="stopBtn" disabled>⏹</button>
-<label>Source <select id="src"><option value="piano">Piano</option><option value="original">Original recording</option></select></label>
-<label>Speed <input type="range" id="speed" min="25" max="100" value="100" aria-label="Practice speed"> <span id="speedV">100%</span></label>
-<label><input type="checkbox" id="muteL"> Mute LH</label>
-<label><input type="checkbox" id="muteR"> Mute RH</label>
-<button id="loopBtn" aria-pressed="false">Loop: off</button>
-<span id="time">0:00 / 0:00</span>
-<audio id="orig" preload="auto" style="display:none"></audio>
+  <div id="main">
+    <header id="topbar">
+      <div id="crumb"><span id="crumbTitle">New score</span><span id="crumbSub" class="muted"></span></div>
+      <div id="topActions">
+        <span id="saveState" class="muted small" role="status"></span>
+        <button id="shortcutsBtn" class="ghostbtn" aria-label="Keyboard shortcuts"><svg class="ic"><use href="#i-help"/></svg><span>Shortcuts</span></button>
+      </div>
+    </header>
+
+    <main id="views">
+      <!-- HOME -->
+      <section class="view" id="view-home" aria-label="New score">
+        <div class="home-grid">
+          <div class="card upload-card">
+            <h1>Turn a recording into piano sheet music.</h1>
+            <p class="lede">Upload an MP3 or WAV. Pick what kind of recording it is. Get a score you can hear, correct, and export.</p>
+            <div id="dz" role="button" tabindex="0" aria-label="Choose an audio file">
+              <svg class="ic big"><use href="#i-down"/></svg>
+              <div><strong>Drop your recording here</strong><span class="muted"> or </span><button id="dzBrowse" type="button" class="linklike">browse files</button></div>
+              <div class="muted small" id="dzHint">MP3, WAV, or FLAC</div>
+              <input type="file" id="fileInput" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" hidden>
+            </div>
+            <div class="row" id="altInputs">
+              <button id="recBtn" type="button">● Record in browser</button>
+              <button id="midiBtn" type="button">Import MIDI (.mid)</button>
+              <input type="file" id="midiInput" accept=".mid,.midi,audio/midi" hidden>
+              <span class="muted small" id="recStatus" role="status"></span>
+            </div>
+            <div id="fileMeta" class="filemeta" hidden>
+              <svg class="ic"><use href="#i-check"/></svg>
+              <div><strong id="fileName"></strong><div class="muted small" id="fileDetail"></div></div>
+              <button id="fileClear" class="ghostbtn sm" type="button">Change</button>
+            </div>
+            <fieldset class="modes">
+              <legend>What kind of recording is it?</legend>
+              <label class="modecard"><input type="radio" name="mode" value="piano" checked>
+                <span><strong>Piano recording</strong><small>There's already piano in it. Keep every performed note, chord, and rhythm as close as possible.</small></span></label>
+              <label class="modecard"><input type="radio" name="mode" value="arrangement">
+                <span><strong>Song or band</strong><small>Vocals and instruments. Build a playable piano arrangement from the melody, bass, and chords.</small></span></label>
+            </fieldset>
+            <div class="row between">
+              <label class="dllabel">Left-hand fullness
+                <select id="density" aria-label="Arrangement density">
+                  <option value="simple">Simple</option>
+                  <option value="standard" selected>Standard</option>
+                  <option value="detailed">Detailed</option>
+                </select></label>
+              <button id="startBtn" class="primary big" type="button" disabled>Transcribe →</button>
+            </div>
+            <div class="err" id="homeErr" role="alert"></div>
+            <div class="muted small" id="limitsLine">Loading limits…</div>
+          </div>
+          <div class="card spanall">
+            <h2>Try an example — no upload needed</h2>
+            <p class="muted small">Real transcriptions of bundled samples, so you can judge the output before uploading anything.</p>
+            <div id="sampleGrid" class="sample-grid"></div>
+          </div>
+          <div class="home-side">
+            <div class="card">
+              <h2>Continue</h2>
+              <div id="recentList"><p class="muted">No scores yet — your first one will appear here.</p></div>
+            </div>
+            <div class="card">
+              <h2>How it works</h2>
+              <ol class="steps">
+                <li><strong>Upload.</strong> We check and decode your audio.</li>
+                <li><strong>Transcribe.</strong> Notes, chords, and beats are detected.</li>
+                <li><strong>Polish.</strong> Listen, fix notes, then export MIDI, MusicXML, or PDF.</li>
+              </ol>
+              <p class="muted small">Baseline quality is measured on test recordings; dense commercial mixes are harder. Details live in the Guide.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROCESSING -->
+      <section class="view" id="view-progress" aria-label="Processing" hidden>
+        <div class="card prog-card">
+          <h2 id="progFile">Working…</h2>
+          <div class="muted" id="progMode"></div>
+          <ol id="stageList" class="stages"></ol>
+          <div id="progBar" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div></div></div>
+          <div class="row between"><span class="muted small" id="progNote"></span><strong id="progPct">0%</strong></div>
+          <div class="err" id="progErr" role="alert"></div>
+          <div class="row"><button id="progBack" type="button">← Back</button><span class="muted small">Your job keeps running if you leave this screen.</span></div>
+        </div>
+      </section>
+
+      <!-- STUDIO -->
+      <section class="view" id="view-studio" aria-label="Score studio" hidden>
+        <div class="studio-head card">
+          <input id="prjTitle" class="titleedit" value="Untitled" aria-label="Project title" maxlength="120">
+          <span id="modeBadge"></span>
+          <span class="muted small" id="scoreMeta"></span>
+          <span class="flex"></span>
+          <div class="seg" role="tablist" aria-label="Score view">
+            <button id="tabScore" role="tab" aria-selected="true">Staff</button>
+            <button id="tabRoll" role="tab" aria-selected="false">Piano roll</button>
+          </div>
+          <button id="followBtn" class="togglebtn" aria-pressed="true" title="Follow playback">Follow</button>
+          <button id="chordsBtn" class="togglebtn" aria-pressed="true" title="Chord symbols">Chords</button>
+          <button id="fingerBtn" class="togglebtn" aria-pressed="true" title="Suggested finger numbers">Fingers</button>
+          <div class="zoomgrp">
+            <button id="zoomOut" aria-label="Zoom out">−</button>
+            <button id="zoomPct" aria-label="Reset zoom">100%</button>
+            <button id="zoomIn" aria-label="Zoom in">+</button>
+          </div>
+          <label class="muted small">Hands
+            <select id="handFilter" aria-label="Hand filter"><option value="both">Both</option><option value="R">Right only</option><option value="L">Left only</option></select>
+          </label>
+          <div class="menuwrap">
+            <button id="exportBtn" class="primary" aria-haspopup="menu" aria-expanded="false"><svg class="ic"><use href="#i-down"/></svg> Export <svg class="ic sm"><use href="#i-chev"/></svg></button>
+            <div id="exportMenu" class="menu" role="menu" hidden>
+              <button role="menuitem" data-exp="mid">MIDI <small>for DAWs &amp; keyboards</small></button>
+              <button role="menuitem" data-exp="musicxml">MusicXML <small>for notation apps</small></button>
+              <button role="menuitem" data-exp="pdf">PDF <small>for printing</small></button>
+              <div class="menufoot muted small" id="expVer"></div>
+            </div>
+          </div>
+          <div class="menuwrap">
+            <button id="overBtn" class="ghostbtn" aria-haspopup="menu" aria-expanded="false" aria-label="More actions">•••</button>
+            <div id="overMenu" class="menu" role="menu" hidden>
+              <div class="menuhead muted small">Re-run this recording</div>
+              <button role="menuitem" data-rerun="simple">Re-arrange · Simple</button>
+              <button role="menuitem" data-rerun="standard">Re-arrange · Standard</button>
+              <button role="menuitem" data-rerun="detailed">Re-arrange · Detailed</button>
+              <button role="menuitem" id="mRetranscribe">Re-transcribe <small>same settings</small></button>
+              <div class="menuhead muted small">Project</div>
+              <button role="menuitem" id="mDuplicate"><svg class="ic"><use href="#i-copy"/></svg> Duplicate project</button>
+              <button role="menuitem" id="mDelete" class="danger"><svg class="ic"><use href="#i-trash"/></svg> Delete project</button>
+            </div>
+          </div>
+        </div>
+        <div class="legend muted small" id="legendRow">
+          <span><i class="dot" style="background:#1a1a1a"></i>detected</span>
+          <span><i class="dot" style="background:#2456a6"></i>arranged</span>
+          <span><i class="dot" style="background:#b05a2a"></i>edited by you</span>
+          <span class="flex"></span><span>Click a note to select · Shift-click adds · Click empty staff to seek</span>
+        </div>
+        <div class="studio-body">
+          <div id="canvasScroll" class="card canvas">
+            <div id="scoreWrap" aria-label="Piano score"></div>
+            <div id="rollWrap" aria-label="Piano roll" hidden></div>
+          </div>
+          <aside id="panel" class="card" aria-label="Editing panel">
+            <div class="ptabs" role="tablist" aria-label="Panel">
+              <button id="ptabEdit" role="tab" aria-selected="true"><svg class="ic"><use href="#i-sliders"/></svg> Edit</button>
+              <button id="ptabAssist" role="tab" aria-selected="false"><svg class="ic"><use href="#i-chat"/></svg> Assistant</button>
+              <button id="ptabDetails" role="tab" aria-selected="false"><svg class="ic"><use href="#i-info"/></svg> Details</button>
+            </div>
+            <div id="panelEdit" role="tabpanel">
+              <p class="muted small" id="selInfo">Nothing selected.</p>
+              <div class="efields">
+                <label>Pitch<input type="number" id="ePitch" min="0" max="127"></label>
+                <label>Start (s)<input type="number" id="eStart" step="0.01" min="0"></label>
+                <label>End (s)<input type="number" id="eEnd" step="0.01" min="0"></label>
+                <label>Velocity<input type="number" id="eVel" min="1" max="127"></label>
+                <label>Hand<select id="eHand"><option value="R">Right</option><option value="L">Left</option></select></label>
+                <label>Finger<select id="eFinger"><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+              </div>
+              <div class="btnrow">
+                <button id="applyEdit" class="primary" disabled>Apply</button>
+                <button id="addNote">Add at cursor</button>
+              </div>
+              <div class="btnrow">
+                <button id="delSel" disabled>Delete</button>
+                <button id="trUp" disabled>+1 st</button>
+                <button id="trDown" disabled>−1 st</button>
+                <button id="undoBtn" aria-label="Undo"><svg class="ic"><use href="#i-undo"/></svg></button>
+                <button id="redoBtn" aria-label="Redo"><svg class="ic"><use href="#i-redo"/></svg></button>
+              </div>
+              <div class="err" id="edErr" role="alert"></div>
+              <div class="ok" id="edOk" role="status"></div>
+              <p class="muted small tip">Tip: in Piano roll view you can drag notes to move them. <kbd>Del</kbd> deletes, <kbd>Ctrl Z</kbd> undoes.</p>
+            </div>
+            <div id="panelAssist" role="tabpanel" hidden>
+              <div id="chatLog" aria-live="polite"></div>
+              <div id="chips" class="chips"></div>
+              <div id="actionCard" hidden><div id="actionText"></div>
+                <div class="btnrow"><button id="applyAction" class="primary sm">Apply change</button><button id="dismissAction" class="sm">Dismiss</button></div>
+              </div>
+              <div class="askrow"><input type="text" id="ask" placeholder="Ask about the score…" aria-label="Ask the assistant">
+              <button id="sendAsk" class="primary" aria-label="Send">→</button></div>
+            </div>
+            <div id="panelDetails" role="tabpanel" hidden>
+              <dl id="detailsDl" class="dl"></dl>
+              <details><summary>Processing record</summary><pre id="procInfo" class="muted small"></pre></details>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- LIBRARY -->
+      <section class="view" id="view-library" aria-label="Library" hidden>
+        <div class="lib-head">
+          <h2>Library <span class="muted" id="libHeadCount"></span></h2>
+          <span class="flex"></span>
+          <div class="searchbox"><svg class="ic"><use href="#i-search"/></svg><input id="libSearch" type="search" placeholder="Search scores…" aria-label="Search scores"></div>
+          <select id="libSort" aria-label="Sort"><option value="new">Recently edited</option><option value="old">Oldest first</option><option value="az">Title A–Z</option></select>
+        </div>
+        <div id="libGrid" class="lib-grid"></div>
+        <div id="libEmpty" class="card empty" hidden>
+          <h3>No scores yet</h3><p class="muted">Transcribe your first recording to start the collection.</p>
+          <button class="primary" data-go="home">New score</button>
+        </div>
+      </section>
+    </main>
+
+    <footer id="dock" hidden>
+      <div class="dockgrp">
+        <button id="back5" class="dockbtn" aria-label="Back 5 seconds"><svg class="ic"><use href="#i-back5"/></svg></button>
+        <button id="play" class="dockbtn big" aria-label="Play or pause"><svg class="ic"><use href="#i-play"/></svg></button>
+        <button id="stopBtn" class="dockbtn" aria-label="Stop"><svg class="ic"><use href="#i-stop"/></svg></button>
+        <button id="fwd5" class="dockbtn" aria-label="Forward 5 seconds"><svg class="ic"><use href="#i-fwd5"/></svg></button>
+      </div>
+      <div class="dockseek"><span id="timeCur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek"><span id="timeTot">0:00</span></div>
+      <div class="dockgrp">
+        <div class="seg dark" role="group" aria-label="Playback source">
+          <button id="srcPiano" aria-pressed="true">Piano</button>
+          <button id="srcOrig" aria-pressed="false">Original</button>
+        </div>
+      </div>
+      <div class="dockgrp"><label class="speedlab">Speed <input type="range" id="speed" min="25" max="100" value="100" aria-label="Practice speed"><span id="speedV">100%</span></label></div>
+      <div class="dockgrp">
+        <button id="loopBtn" class="dockbtn" aria-pressed="false" aria-label="Loop selection"><svg class="ic"><use href="#i-loop"/></svg></button>
+        <span id="loopLabel" class="muted small"></span>
+      </div>
+      <div class="dockgrp hands">
+        <label><input type="checkbox" id="muteL"> LH <input type="range" id="gainL" min="0" max="100" value="100" aria-label="Left hand volume"></label>
+        <label><input type="checkbox" id="muteR"> RH <input type="range" id="gainR" min="0" max="100" value="100" aria-label="Right hand volume"></label>
+      </div>
+    </footer>
+  </div>
 </div>
 
-<div class="grid2">
-<section class="card" aria-label="Editor">
-<h3 style="margin-top:0">Edit notes</h3>
-<div class="muted" id="selInfo">Click a note in the score to select it (Shift-click adds; Shift-click a measure selects it).</div>
-<div class="row" style="margin-top:8px">
-<label>Pitch <input type="number" id="ePitch" min="0" max="127" style="width:70px"></label>
-<label>Start (s) <input type="number" id="eStart" step="0.01" min="0" style="width:80px"></label>
-<label>End (s) <input type="number" id="eEnd" step="0.01" min="0" style="width:80px"></label>
-<label>Vel <input type="number" id="eVel" min="1" max="127" style="width:64px"></label>
-<label>Hand <select id="eHand"><option value="R">RH</option><option value="L">LH</option></select></label>
-</div>
-<div class="row" style="margin-top:8px">
-<button id="applyEdit" disabled>Apply to selected</button>
-<button id="addNote">Add note</button>
-<button id="delSel" disabled>Delete selected</button>
-<button id="trUp" disabled>+1 st</button><button id="trDown" disabled>−1 st</button>
-<button id="undoBtn">Undo</button><button id="redoBtn">Redo</button>
-</div><div class="err" id="edErr"></div><div class="ok" id="edOk"></div>
-</section>
-
-<section class="card" aria-label="Assistant">
-<h3 style="margin-top:0">Score assistant</h3>
-<div class="row"><input type="text" id="ask" style="flex:1" placeholder='e.g. "Explain the chord in measure 4" or "Transpose this selection down 2 semitones"'>
-<button id="sendAsk" class="primary">Ask</button></div>
-<div id="assistReply">Ask about the score. I propose changes for you to confirm — nothing changes silently.</div>
-<div id="actionCard"><div id="actionText"></div><div class="row" style="margin-top:8px">
-<button id="applyAction" class="primary">Preview &amp; apply</button><button id="dismissAction">Dismiss</button></div></div>
-</section>
-</div>
-
-<section class="card" aria-label="Projects">
-<h3 style="margin-top:0">Projects</h3>
-<ul id="projects"><li class="muted">No projects yet.</li></ul>
-</section>
-</main>
+<div id="toasts" aria-live="polite"></div>
+<div id="modalRoot"></div>
+<audio id="orig" preload="auto"></audio>
 <script src="/app.js"></script>
 </body>
 </html>

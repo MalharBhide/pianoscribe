@@ -1,13 +1,17 @@
-# Piano Scribe 0.1.0 (vertical slice)
+# Piano Scribe 0.2.0
 
 Upload a recording → get a readable, editable piano score. Two modes:
 **Piano transcription** (recording has piano) and **Song-to-piano
-arrangement** (band/vocals → playable piano). Score, piano playback,
-editing, assistant, MIDI/MusicXML/PDF export, saved projects.
+arrangement** (band/vocals → playable piano). Staff + piano-roll studio,
+synced piano playback, note editing with undo, score assistant, chord
+symbols, suggested fingering, MIDI import, example gallery, in-browser
+recording, MIDI/MusicXML/PDF export, project library.
 
-> Neither mode is production-ready. This slice ships DSP baselines with
-> measured synth-fixture quality (see `reports/`). Real-recording corpora
-> are required before any production claim.
+> Transcription *models* are DSP baselines with measured synth-fixture
+> quality (see `reports/`); real-recording corpora are required before any
+> production-accuracy claim. The *application* (API, worker, editor,
+> packaging, docs) is production-structured: hardened, observable, and
+> deployable — see `docs/PRODUCTION.md` and `docs/DEPLOY.md`.
 
 ## Quick start
 
@@ -26,12 +30,15 @@ uvicorn piano_scribe.api:app --host 127.0.0.1 --port 8000
 python -m piano_scribe.worker
 ```
 
-Open http://127.0.0.1:8000 in a browser, upload a WAV (MP3 works when
-`miniaudio` installed — it is in the default env), pick a mode, and open
-the score when the job finishes.
+Open http://127.0.0.1:8000 in a browser and either upload audio
+(MP3/WAV/FLAC), record in the browser, import a MIDI file, or transcribe
+a bundled example. Pick a mode, then polish the score in the studio.
 
 Run from the repo root with the venv active so `piano_scribe` resolves
 (editable install) and `storage/` lands in the project.
+
+To put it on a website instead of localhost, follow `docs/DEPLOY.md`
+(Render, Fly.io, or any VPS with Docker).
 
 ## Configuration (actual limits, served verbatim at `/api/config`)
 
@@ -78,10 +85,12 @@ stored score JSON regardless of model version.
 - `scripts/` — fixtures, eval, gate check, duration ladder
 - `reports/` — measured results (checked in for the baseline)
 - `docs/` — spec, eval protocol, model/data inventory, release gate,
-  listening rubric, checklist, limitations
+  listening rubric, checklist, limitations, production, deploy, competitors
 - `storage/` — runtime DB/audio/artifacts (git-ignored)
 
 ## Docs
 
 Start with `docs/SPEC.md`, then `docs/EVALUATION_PROTOCOL.md`,
 `docs/KNOWN_LIMITATIONS.md`, `docs/RELEASE_CHECKLIST.md`.
+Operators read `docs/PRODUCTION.md` + `docs/DEPLOY.md`; product context is
+in `docs/COMPETITORS.md`.

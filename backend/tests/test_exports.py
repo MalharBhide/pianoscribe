@@ -13,10 +13,11 @@ def make_score():
     s = Score(title="Export Test", mode="piano")
     s.tempo = TempoMap(beats=[], bpm=120.0, beats_per_bar=4)
     s.notes = [
-        Note(id="n1", pitch=60, start_sec=0.0, end_sec=0.5, hand="R", provenance="detected"),
-        Note(id="n2", pitch=64, start_sec=0.0, end_sec=0.5, hand="R", provenance="arranged"),
-        Note(id="n3", pitch=48, start_sec=0.0, end_sec=1.8, hand="L", provenance="user-edited"),
+        Note(id="n1", pitch=60, start_sec=0.0, end_sec=0.5, hand="R", provenance="detected", finger=1),
+        Note(id="n2", pitch=64, start_sec=0.0, end_sec=0.5, hand="R", provenance="arranged", finger=3),
+        Note(id="n3", pitch=48, start_sec=0.0, end_sec=1.8, hand="L", provenance="user-edited", finger=5),
     ]
+    s.chords = [{"start_sec": 0.0, "end_sec": 2.0, "label": "0:maj", "score": 0.9, "root": 0}]
     return s
 
 
@@ -32,6 +33,18 @@ def test_musicxml_wellformed_and_complete():
     pitches = root.findall(".//pitch")
     assert len(pitches) == 3
     assert root.find(".//time/beats").text == "4"
+    harmony = root.find(".//harmony")
+    assert harmony is not None
+    assert harmony.find("root/root-step").text == "C"
+    assert harmony.find("kind").text == "major"
+    fingers = [f.text for f in root.findall(".//fingering")]
+    assert sorted(fingers) == ["1", "3", "5"]
+
+
+def test_svg_has_chords_and_fingers():
+    svg = render_svg(make_score())
+    assert "chord-sym" in svg and ">C<" in svg
+    assert 'class="fing"' in svg
 
 
 def test_midi_roundtrip_note_count():

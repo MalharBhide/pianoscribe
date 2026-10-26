@@ -101,7 +101,7 @@
      "harmonics": 4,
      "density": "standard"
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "piano",
     "density": "standard",
     "windows": 1
@@ -118,7 +118,7 @@
    "fixture": "synth_chords",
    "mode": "piano",
    "density": "standard",
-   "wall_sec": 0.05,
+   "wall_sec": 0.04,
    "audio_sec": 4.7,
    "raw": {
     "tol_sec": 0.05,
@@ -197,7 +197,7 @@
     "melody_f1": 1.0
    },
    "timing": {
-    "total_sec": 0.05,
+    "total_sec": 0.04,
     "audio_sec": 4.7
    },
    "processing": {
@@ -213,7 +213,7 @@
      "harmonics": 4,
      "density": "standard"
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "piano",
     "density": "standard",
     "windows": 1
@@ -325,7 +325,7 @@
      "harmonics": 4,
      "density": "standard"
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "piano",
     "density": "standard",
     "windows": 1
@@ -342,7 +342,7 @@
    "fixture": "synth_minute",
    "mode": "piano",
    "density": "standard",
-   "wall_sec": 0.6,
+   "wall_sec": 0.59,
    "audio_sec": 55.2,
    "raw": {
     "tol_sec": 0.05,
@@ -421,7 +421,7 @@
     "melody_f1": 1.0
    },
    "timing": {
-    "total_sec": 0.6,
+    "total_sec": 0.59,
     "audio_sec": 55.2
    },
    "processing": {
@@ -437,7 +437,7 @@
      "harmonics": 4,
      "density": "standard"
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "piano",
     "density": "standard",
     "windows": 3
@@ -549,7 +549,7 @@
      "min_bass_sec": 0.25,
      "harmonics": 4
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "arrangement",
     "density": "simple",
     "windows": 1
@@ -661,7 +661,7 @@
      "min_bass_sec": 0.25,
      "harmonics": 4
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "arrangement",
     "density": "standard",
     "windows": 1
@@ -773,7 +773,7 @@
      "min_bass_sec": 0.25,
      "harmonics": 4
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "arrangement",
     "density": "detailed",
     "windows": 1
@@ -790,7 +790,7 @@
    "fixture": "synth_minute",
    "mode": "arrangement",
    "density": "standard",
-   "wall_sec": 1.03,
+   "wall_sec": 1.08,
    "audio_sec": 55.2,
    "raw": {
     "tol_sec": 0.05,
@@ -869,7 +869,7 @@
     "melody_f1": 0.8858
    },
    "timing": {
-    "total_sec": 1.03,
+    "total_sec": 1.08,
     "audio_sec": 55.2
    },
    "processing": {
@@ -885,7 +885,7 @@
      "min_bass_sec": 0.25,
      "harmonics": 4
     },
-    "processing_version": "slice-0.1.0",
+    "processing_version": "slice-0.2.0",
     "mode": "arrangement",
     "density": "standard",
     "windows": 3

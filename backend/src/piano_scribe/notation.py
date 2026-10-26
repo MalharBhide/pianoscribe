@@ -100,7 +100,7 @@ def assign_hands_piano(score: Score, split_pitch: int = 60) -> Score:
         votes = sum(1 for n in g if n.pitch >= split_pitch)
         hand = "R" if votes * 2 >= len(g) else "L"
         for n in g:
-            if n.hand not in ("L", "R") or n.provenance == "detected":
+            if n.hand not in ("L", "R") or n.provenance in ("detected", "imported"):
                 n.hand = hand
     return score
 
@@ -128,6 +128,39 @@ def staff_steps(pitch: int, clef: str) -> Tuple[int, int]:
     return dia_idx - base, alter
 
 
+# -- chord symbols ---------------------------------------------------------------
+CHORD_PC_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+CHORD_SUFFIX = {"maj": "", "min": "m", "dim": "dim", "aug": "aug",
+                "7": "7", "maj7": "maj7", "m7": "m7"}
+CHORD_XML_KIND = {"maj": "major", "min": "minor", "dim": "diminished",
+                  "aug": "augmented", "7": "dominant", "maj7": "major-seventh",
+                  "m7": "minor-seventh"}
+
+
+def chord_symbol(label: str) -> str:
+    """'9:min' -> 'Am'. Returns '' for unknown labels."""
+    try:
+        root_s, quality = label.split(":")
+        root = int(root_s) % 12
+    except (ValueError, AttributeError):
+        return ""
+    suffix = CHORD_SUFFIX.get(quality)
+    if suffix is None:
+        return ""
+    return f"{CHORD_PC_NAMES[root]}{suffix}"
+
+
+def _harmony_xml(chord: Dict[str, Any]) -> str:
+    root = int(chord.get("root", 0)) % 12
+    quality = str(chord.get("label", "")).split(":")[-1]
+    name = CHORD_PC_NAMES[root]
+    step, alter = (name[0], -1) if len(name) == 2 else (name, 0)
+    kind = CHORD_XML_KIND.get(quality, "major")
+    return (f"<harmony><root><root-step>{step}</root-step>"
+            + (f"<root-alter>{alter}</root-alter>" if alter else "")
+            + f"</root><kind>{kind}</kind></harmony>")
+
+
 # -- MusicXML ---------------------------------------------------------------------
 def to_musicxml(score: Score) -> str:
     end_sec = max([n.end_sec for n in score.notes], default=1.0)
@@ -150,9 +183,12 @@ def to_musicxml(score: Score) -> str:
                       '<clef number="2"><sign>F</sign><line>4</line></clef>'
                       '<time><beats>%d</beats><beat-type>4</beat-type></time></attributes>\n'
                       % (DIVISIONS, bpb))
+        hams = [c for c in score.chords
+                if c.get("label") != "unknown" and ms - 1e-6 <= float(c.get("start_sec", -1)) < me - 1e-6]
         for staff_no, hand in ((1, "R"), (2, "L")):
             segs = _measure_segments(score, hand, m, ms, me)
-            _write_voice(out, segs, staff_no, ms, me)
+            _write_voice(out, segs, staff_no, ms, me,
+                         harmonies=hams if staff_no == 1 else None)
         out.write('</measure>\n')
     out.write('</part></score-partwise>\n')
     return out.getvalue()
@@ -178,21 +214,29 @@ def _measure_segments(score: Score, hand: str, m: int, ms: float, me: float):
     return segs
 
 
-def _write_voice(out: io.StringIO, segs: List[Dict[str, Any]], staff_no: int, ms: float, me: float):
-    beaten = 0  # divisions consumed
-    total = None
-    # group by onset for chords
-    i = 0
+def _write_voice(out: io.StringIO, segs: List[Dict[str, Any]], staff_no: int, ms: float, me: float,
+                 harmonies: Any = None):
     order = sorted(segs, key=lambda s: (s["start"], s["note"].pitch))
     # rest-fill cursor in divisions
     def div_at(t: float) -> int:
         frac = (t - ms) / max(1e-6, me - ms)
         return int(round(frac * 4 * DIVISIONS))
     total = div_at(me)
+    hams = sorted(((div_at(float(c.get("start_sec", ms))), _harmony_xml(c)) for c in (harmonies or [])),
+                  key=lambda x: x[0])
+    hip = 0
+
+    def flush_harmonies(upto: int) -> None:
+        nonlocal hip
+        while hip < len(hams) and hams[hip][0] <= upto:
+            out.write(hams[hip][1])
+            hip += 1
+
     cur = 0
     idx = 0
     while idx < len(order):
         onset_div = div_at(order[idx]["start"])
+        flush_harmonies(onset_div)
         if onset_div > cur:
             _rest(out, onset_div - cur, staff_no)
             cur = onset_div
@@ -218,10 +262,14 @@ def _write_voice(out: io.StringIO, segs: List[Dict[str, Any]], staff_no: int, ms
                 out.write('<tie type="start"/>')
             if s["tie"] in ("stop", "continue"):
                 out.write('<tie type="stop"/>')
+            if n.finger:
+                out.write(f'<notations><technical><fingering>{int(n.finger)}</fingering>'
+                          f'</technical></notations>')
             out.write('</note>')
             maxdv = max(maxdv, s["dur_div"])
         cur += maxdv
         idx = j
+    flush_harmonies(total)
     if cur < total:
         _rest(out, total - cur, staff_no)
 
@@ -321,12 +369,15 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
             f'viewBox="0 0 {W} {H}" role="img" aria-label="Piano score">\n')
     s.write('<style>.nl{stroke:#333;stroke-width:1}.mh{fill:#1a1a1a}.acc{font:12px serif}'
             '.bar{stroke:#333;stroke-width:1.2}.mno{font:10px sans-serif;fill:#888}'
-            '.notehead{cursor:pointer}</style>\n')
+            '.notehead{cursor:pointer}.chord-sym{font:600 12px Georgia,serif;fill:#17407f}'
+            '.fing{font:7.5px sans-serif;fill:#5b6470}'
+            'svg.hide-chords .chord-sym{display:none}svg.hide-fing .fing{display:none}</style>\n')
     s.write(f'<text x="{STAFF_LEFT}" y="22" font-family="sans-serif" font-size="16" font-weight="bold">'
             f'{escape(score.title)}</text>\n')
+    layouts: List[Dict[str, Any]] = []
     # state for accidental suppression per system+staff+line
     for si, sys_bounds in enumerate(systems):
-        y0 = 40 + si * sys_h
+        y0 = 54 + si * sys_h
         treble_top, bass_top = y0 + 8, y0 + 8 + 5 * SPACE + 26
         for top in (treble_top, bass_top):
             for ln in range(5):
@@ -345,6 +396,7 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
             s.write(f'<rect data-measure="{gidx}" data-t0="{ms:.3f}" data-t1="{me:.3f}" x="{x0}" '
                     f'y="{treble_top - 14}" width="{mw}" height="{(bass_top + 4 * SPACE) - treble_top + 14}" '
                     f'fill="transparent" class="measure-hit"/>\n')
+            layouts.append({"ms": ms, "me": me, "x0": x0, "mw": mw, "treble_top": treble_top})
             for n in score.notes:
                 if n.end_sec <= ms or n.start_sec >= me:
                     continue
@@ -370,7 +422,7 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                     if acc_state.get(key) != alter:
                         s.write(f'<text class="acc" x="{x - 15}" y="{y + 4}">♯</text>\n')
                         acc_state[key] = alter
-                color = {"detected": "#1a1a1a", "arranged": "#2a5db0", "user-edited": "#b05a2a"}.get(n.provenance, "#1a1a1a")
+                color = {"detected": "#1a1a1a", "imported": "#1a1a1a", "arranged": "#2a5db0", "user-edited": "#b05a2a"}.get(n.provenance, "#1a1a1a")
                 s.write(f'<ellipse class="notehead" data-note="{n.id}" data-time="{n.start_sec:.3f}" '
                         f'cx="{x:.1f}" cy="{y:.1f}" rx="6" ry="4.4" fill="{color}" '
                         f'transform="rotate(-18 {x:.1f} {y:.1f})">'
@@ -381,6 +433,22 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                 xstem = x - 5.4 if stem_up else x + 5.4
                 y2 = y - 32 if stem_up else y + 32
                 s.write(f'<line x1="{xstem:.1f}" y1="{y:.1f}" x2="{xstem:.1f}" y2="{y2:.1f}" stroke="{color}" stroke-width="1.3"/>\n')
+                if n.finger:
+                    fx = x + 8 if stem_up else x - 8
+                    s.write(f'<text class="fing" x="{fx:.1f}" y="{y + 3:.1f}" text-anchor="middle">{int(n.finger)}</text>\n')
+    if score.chords:
+        s.write('<g id="chordSyms">\n')
+        for c in score.chords:
+            sym = chord_symbol(str(c.get("label", "")))
+            if not sym:
+                continue
+            t = float(c.get("start_sec", 0))
+            lay = next((L for L in layouts if L["ms"] - 1e-6 <= t < L["me"] - 1e-6), None)
+            if lay is None:
+                continue
+            cx = lay["x0"] + 4 + max(0.0, (t - lay["ms"]) / max(1e-6, lay["me"] - lay["ms"])) * (lay["mw"] - 8)
+            s.write(f'<text class="chord-sym" x="{cx:.1f}" y="{lay["treble_top"] - 16:.1f}">{escape(sym)}</text>\n')
+        s.write('</g>\n')
     s.write('</svg>\n')
     return s.getvalue()
 
