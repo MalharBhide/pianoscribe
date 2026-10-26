@@ -1,0 +1,24 @@
+# thresholds are requirements under test, not accuracy claims.
+# eval_tag must match reports/eval_<eval_tag>.json
+eval_tag: baseline
+match_tolerance_ms: 50
+
+piano:
+  note_f1_min: 0.50          # synth-fixture floor for DSP baseline
+  note_precision_min: 0.40
+  onset_p95_ms_max: 120
+  repeat_preservation_min: 0.50
+  chord_recovery_min: 0.40
+  max_extra_per_sec: 3.0
+  drift_ms_per_min_max: 20   # cumulative timing drift ceiling
+
+arrangement:
+  melody_f1_min: 0.40
+  harmony_plausibility_min: 3.0   # human rubric 1-5, when judged
+  max_extra_per_sec: 2.0
+  onset_p95_ms_max: 150
+
+system:
+  api_failures_max: 0
+  export_playback_match_required: true
+  rollback_ok_required: true

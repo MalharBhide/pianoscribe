@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piano Scribe</title>
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--ink:#23272e;--muted:#5d6672;--accent:#2a5db0;--accent-soft:#e8eefb;--warn:#b05a2a;--line:#dde2e8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header h1{font-size:19px;margin:0}header h1 span{color:var(--accent)}
+header .sub{color:var(--muted);font-size:13px}
+main{max-width:1180px;margin:0 auto;padding:16px;display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+label{font-size:13px;color:var(--muted)}select,input[type=text],input[type=number]{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
+button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted);background:#f5f7fa}
+#drop.over{border-color:var(--accent);background:var(--accent-soft)}
+#limits{font-size:13px;color:var(--muted);margin-top:8px}
+#progress{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin-top:10px;display:none}
+#progress>div{height:100%;width:0;background:var(--accent)}
+#stage{font-size:13px;color:var(--muted);margin-top:6px}
+#scoreWrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:8px;background:#fff}
+#scoreWrap svg{width:100%;height:auto;display:block}
+.notehead.sel{stroke:var(--warn);stroke-width:2.5}
+.measure-hit{cursor:pointer}
+#cursorLine{stroke:#d33;stroke-width:2;pointer-events:none}
+#transport{position:sticky;bottom:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+#time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:110px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+.pill{font-size:12px;padding:2px 10px;border-radius:20px;background:var(--accent-soft);color:var(--accent)}
+.pill.arr{background:#eaf6ec;color:#1e7a34}.pill small{opacity:.7}
+.legend{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+#assistReply{font-size:14px;background:#f5f7fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;min-height:44px}
+#actionCard{border:1px solid var(--warn);border-radius:8px;padding:10px;margin-top:8px;display:none}
+.err{color:#a33;font-size:13px;margin-top:6px}.ok{color:#1e7a34;font-size:13px;margin-top:6px}
+details{font-size:13px;color:var(--muted)}summary{cursor:pointer}
+#projects li{margin:4px 0}#projects a{color:var(--accent);cursor:pointer}
+.muted{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>𝄞 Piano <span>Scribe</span></h1>
+<div class="sub">Upload a recording → get a readable, editable piano score.</div>
+<div class="sub" id="modeBadge"></div>
+</header>
+<main>
+<section class="card" aria-label="Upload">
+<div class="row">
+<label>Mode <select id="mode" aria-label="Transcription mode">
+<option value="piano">Piano transcription (recording has piano)</option>
+<option value="arrangement">Song-to-piano arrangement (band/vocals)</option>
+</select></label>
+<label>Accompaniment <select id="density" aria-label="Arrangement density">
+<option value="simple">Simple</option><option value="standard" selected>Standard</option><option value="detailed">Detailed</option>
+</select></label>
+<span class="muted">Density changes voicing fullness, not accuracy.</span>
+</div>
+<div id="drop">Drop MP3 or WAV here, or <button id="browse" type="button">Choose file</button>
+<input type="file" id="file" accept=".mp3,.wav,audio/mpeg,audio/wav" hidden></div>
+<div id="limits">Loading limits…</div>
+<div id="progress" role="progressbar" aria-label="Processing progress"><div></div></div>
+<div id="stage"></div><div class="err" id="upErr"></div>
+</section>
+
+<section class="card" aria-label="Score">
+<div class="row"><strong id="projTitle">No score yet</strong><span id="scoreMeta" class="muted"></span>
+<span style="flex:1"></span>
+<button id="expMid" disabled>MIDI</button><button id="expXml" disabled>MusicXML</button><button id="expPdf" disabled>PDF</button>
+</div>
+<div class="legend"><span><i class="dot" style="background:#1a1a1a"></i>detected</span>
+<span><i class="dot" style="background:#2a5db0"></i>arranged</span>
+<span><i class="dot" style="background:#b05a2a"></i>edited by you</span></div>
+<div id="scoreWrap" aria-label="Piano score"><p class="muted" style="padding:16px">Upload a recording to see your score here.</p></div>
+<details style="margin-top:8px"><summary>Processing details (model &amp; version)</summary><pre id="procInfo" class="muted"></pre></details>
+</section>
+
+<div id="transport" role="group" aria-label="Playback">
+<button id="play" class="primary" disabled aria-label="Play or pause">▶ Play</button>
+<button id="stopBtn" disabled>⏹</button>
+<label>Source <select id="src"><option value="piano">Piano</option><option value="original">Original recording</option></select></label>
+<label>Speed <input type="range" id="speed" min="25" max="100" value="100" aria-label="Practice speed"> <span id="speedV">100%</span></label>
+<label><input type="checkbox" id="muteL"> Mute LH</label>
+<label><input type="checkbox" id="muteR"> Mute RH</label>
+<button id="loopBtn" aria-pressed="false">Loop: off</button>
+<span id="time">0:00 / 0:00</span>
+<audio id="orig" preload="auto" style="display:none"></audio>
+</div>
+
+<div class="grid2">
+<section class="card" aria-label="Editor">
+<h3 style="margin-top:0">Edit notes</h3>
+<div class="muted" id="selInfo">Click a note in the score to select it (Shift-click adds; Shift-click a measure selects it).</div>
+<div class="row" style="margin-top:8px">
+<label>Pitch <input type="number" id="ePitch" min="0" max="127" style="width:70px"></label>
+<label>Start (s) <input type="number" id="eStart" step="0.01" min="0" style="width:80px"></label>
+<label>End (s) <input type="number" id="eEnd" step="0.01" min="0" style="width:80px"></label>
+<label>Vel <input type="number" id="eVel" min="1" max="127" style="width:64px"></label>
+<label>Hand <select id="eHand"><option value="R">RH</option><option value="L">LH</option></select></label>
+</div>
+<div class="row" style="margin-top:8px">
+<button id="applyEdit" disabled>Apply to selected</button>
+<button id="addNote">Add note</button>
+<button id="delSel" disabled>Delete selected</button>
+<button id="trUp" disabled>+1 st</button><button id="trDown" disabled>−1 st</button>
+<button id="undoBtn">Undo</button><button id="redoBtn">Redo</button>
+</div><div class="err" id="edErr"></div><div class="ok" id="edOk"></div>
+</section>
+
+<section class="card" aria-label="Assistant">
+<h3 style="margin-top:0">Score assistant</h3>
+<div class="row"><input type="text" id="ask" style="flex:1" placeholder='e.g. "Explain the chord in measure 4" or "Transpose this selection down 2 semitones"'>
+<button id="sendAsk" class="primary">Ask</button></div>
+<div id="assistReply">Ask about the score. I propose changes for you to confirm — nothing changes silently.</div>
+<div id="actionCard"><div id="actionText"></div><div class="row" style="margin-top:8px">
+<button id="applyAction" class="primary">Preview &amp; apply</button><button id="dismissAction">Dismiss</button></div></div>
+</section>
+</div>
+
+<section class="card" aria-label="Projects">
+<h3 style="margin-top:0">Projects</h3>
+<ul id="projects"><li class="muted">No projects yet.</li></ul>
+</section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

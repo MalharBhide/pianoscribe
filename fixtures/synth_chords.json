@@ -1,0 +1,133 @@
+{
+ "notes": [
+  {
+   "pitch": 48,
+   "start_sec": 0.2,
+   "end_sec": 1.1,
+   "velocity": 85,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 0.2,
+   "end_sec": 1.1,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 0.2,
+   "end_sec": 1.1,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 60,
+   "start_sec": 0.2,
+   "end_sec": 1.1,
+   "velocity": 85,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 1.3,
+   "end_sec": 2.2,
+   "velocity": 85,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 1.3,
+   "end_sec": 2.2,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 1.3,
+   "end_sec": 2.2,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 53,
+   "start_sec": 1.3,
+   "end_sec": 2.2,
+   "velocity": 85,
+   "role": "melody",
+   "hand": "L"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 2.4,
+   "end_sec": 3.3,
+   "velocity": 85,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 2.4,
+   "end_sec": 3.3,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 2.4,
+   "end_sec": 3.3,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 2.4,
+   "end_sec": 3.3,
+   "velocity": 85,
+   "role": "melody",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 3.5,
+   "end_sec": 4.4,
+   "velocity": 85,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 3.5,
+   "end_sec": 4.4,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 3.5,
+   "end_sec": 4.4,
+   "velocity": 85,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 60,
+   "start_sec": 3.5,
+   "end_sec": 4.4,
+   "velocity": 85,
+   "role": "melody",
+   "hand": "R"
+  }
+ ],
+ "sr": 22050
+}

@@ -1,0 +1,93 @@
+{
+ "notes": [
+  {
+   "pitch": 60,
+   "start_sec": 0.2,
+   "end_sec": 0.52,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 62,
+   "start_sec": 0.62,
+   "end_sec": 0.94,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 64,
+   "start_sec": 1.04,
+   "end_sec": 1.36,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 65,
+   "start_sec": 1.46,
+   "end_sec": 1.78,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 1.88,
+   "end_sec": 2.2,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 2.3,
+   "end_sec": 2.62,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 2.72,
+   "end_sec": 3.04,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 3.14,
+   "end_sec": 3.46,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 3.56,
+   "end_sec": 3.88,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 3.98,
+   "end_sec": 4.3,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 4.4,
+   "end_sec": 4.72,
+   "velocity": 95,
+   "role": "melody",
+   "hand": "R"
+  }
+ ],
+ "sr": 22050
+}

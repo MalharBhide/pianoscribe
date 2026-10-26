@@ -1,0 +1,1405 @@
+{
+ "notes": [
+  {
+   "pitch": 48,
+   "start_sec": 0.2,
+   "end_sec": 1.2,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 0.2,
+   "end_sec": 1.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 0.2,
+   "end_sec": 1.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 0.2,
+   "end_sec": 0.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 0.7,
+   "end_sec": 1.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 1.2,
+   "end_sec": 1.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 1.7,
+   "end_sec": 2.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 2.4,
+   "end_sec": 3.4,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 2.4,
+   "end_sec": 3.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 2.4,
+   "end_sec": 3.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 2.4,
+   "end_sec": 2.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 2.9,
+   "end_sec": 3.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 3.4,
+   "end_sec": 3.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 3.9,
+   "end_sec": 4.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 4.6,
+   "end_sec": 5.6,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 4.6,
+   "end_sec": 5.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 4.6,
+   "end_sec": 5.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 4.6,
+   "end_sec": 5.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 5.1,
+   "end_sec": 5.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 5.6,
+   "end_sec": 6.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 6.1,
+   "end_sec": 6.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 6.8,
+   "end_sec": 7.8,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 6.8,
+   "end_sec": 7.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 6.8,
+   "end_sec": 7.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 6.8,
+   "end_sec": 7.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 7.3,
+   "end_sec": 7.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 7.8,
+   "end_sec": 8.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 8.3,
+   "end_sec": 8.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 9.0,
+   "end_sec": 10.0,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 9.0,
+   "end_sec": 10.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 9.0,
+   "end_sec": 10.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 9.0,
+   "end_sec": 9.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 9.5,
+   "end_sec": 9.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 10.0,
+   "end_sec": 10.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 10.5,
+   "end_sec": 10.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 11.2,
+   "end_sec": 12.2,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 11.2,
+   "end_sec": 12.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 11.2,
+   "end_sec": 12.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 11.2,
+   "end_sec": 11.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 11.7,
+   "end_sec": 12.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 12.2,
+   "end_sec": 12.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 12.7,
+   "end_sec": 13.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 13.4,
+   "end_sec": 14.4,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 13.4,
+   "end_sec": 14.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 13.4,
+   "end_sec": 14.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 13.4,
+   "end_sec": 13.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 13.9,
+   "end_sec": 14.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 14.4,
+   "end_sec": 14.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 14.9,
+   "end_sec": 15.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 15.6,
+   "end_sec": 16.6,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 15.6,
+   "end_sec": 16.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 15.6,
+   "end_sec": 16.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 15.6,
+   "end_sec": 16.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 16.1,
+   "end_sec": 16.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 16.6,
+   "end_sec": 17.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 17.1,
+   "end_sec": 17.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 17.8,
+   "end_sec": 18.8,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 17.8,
+   "end_sec": 18.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 17.8,
+   "end_sec": 18.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 17.8,
+   "end_sec": 18.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 18.3,
+   "end_sec": 18.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 18.8,
+   "end_sec": 19.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 19.3,
+   "end_sec": 19.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 20.0,
+   "end_sec": 21.0,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 20.0,
+   "end_sec": 21.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 20.0,
+   "end_sec": 21.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 20.0,
+   "end_sec": 20.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 20.5,
+   "end_sec": 20.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 21.0,
+   "end_sec": 21.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 21.5,
+   "end_sec": 21.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 22.2,
+   "end_sec": 23.2,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 22.2,
+   "end_sec": 23.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 22.2,
+   "end_sec": 23.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 22.2,
+   "end_sec": 22.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 22.7,
+   "end_sec": 23.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 23.2,
+   "end_sec": 23.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 23.7,
+   "end_sec": 24.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 24.4,
+   "end_sec": 25.4,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 24.4,
+   "end_sec": 25.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 24.4,
+   "end_sec": 25.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 24.4,
+   "end_sec": 24.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 24.9,
+   "end_sec": 25.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 25.4,
+   "end_sec": 25.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 25.9,
+   "end_sec": 26.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 26.6,
+   "end_sec": 27.6,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 26.6,
+   "end_sec": 27.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 26.6,
+   "end_sec": 27.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 26.6,
+   "end_sec": 27.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 27.1,
+   "end_sec": 27.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 27.6,
+   "end_sec": 28.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 28.1,
+   "end_sec": 28.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 28.8,
+   "end_sec": 29.8,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 28.8,
+   "end_sec": 29.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 28.8,
+   "end_sec": 29.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 28.8,
+   "end_sec": 29.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 29.3,
+   "end_sec": 29.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 29.8,
+   "end_sec": 30.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 30.3,
+   "end_sec": 30.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 31.0,
+   "end_sec": 32.0,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 31.0,
+   "end_sec": 32.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 31.0,
+   "end_sec": 32.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 31.0,
+   "end_sec": 31.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 31.5,
+   "end_sec": 31.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 32.0,
+   "end_sec": 32.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 32.5,
+   "end_sec": 32.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 33.2,
+   "end_sec": 34.2,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 33.2,
+   "end_sec": 34.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 33.2,
+   "end_sec": 34.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 33.2,
+   "end_sec": 33.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 33.7,
+   "end_sec": 34.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 34.2,
+   "end_sec": 34.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 34.7,
+   "end_sec": 35.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 35.4,
+   "end_sec": 36.4,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 35.4,
+   "end_sec": 36.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 35.4,
+   "end_sec": 36.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 35.4,
+   "end_sec": 35.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 35.9,
+   "end_sec": 36.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 36.4,
+   "end_sec": 36.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 36.9,
+   "end_sec": 37.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 37.6,
+   "end_sec": 38.6,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 37.6,
+   "end_sec": 38.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 37.6,
+   "end_sec": 38.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 37.6,
+   "end_sec": 38.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 38.1,
+   "end_sec": 38.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 38.6,
+   "end_sec": 39.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 39.1,
+   "end_sec": 39.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 39.8,
+   "end_sec": 40.8,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 39.8,
+   "end_sec": 40.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 39.8,
+   "end_sec": 40.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 39.8,
+   "end_sec": 40.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 40.3,
+   "end_sec": 40.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 40.8,
+   "end_sec": 41.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 41.3,
+   "end_sec": 41.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 42.0,
+   "end_sec": 43.0,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 42.0,
+   "end_sec": 43.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 42.0,
+   "end_sec": 43.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 42.0,
+   "end_sec": 42.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 42.5,
+   "end_sec": 42.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 43.0,
+   "end_sec": 43.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 43.5,
+   "end_sec": 43.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 44.2,
+   "end_sec": 45.2,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 44.2,
+   "end_sec": 45.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 44.2,
+   "end_sec": 45.2,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 44.2,
+   "end_sec": 44.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 44.7,
+   "end_sec": 45.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 45.2,
+   "end_sec": 45.6,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 45.7,
+   "end_sec": 46.1,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 46.4,
+   "end_sec": 47.4,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 46.4,
+   "end_sec": 47.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 46.4,
+   "end_sec": 47.4,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 46.4,
+   "end_sec": 46.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 46.9,
+   "end_sec": 47.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 47.4,
+   "end_sec": 47.8,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 47.9,
+   "end_sec": 48.3,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 41,
+   "start_sec": 48.6,
+   "end_sec": 49.6,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 45,
+   "start_sec": 48.6,
+   "end_sec": 49.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 48.6,
+   "end_sec": 49.6,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 48.6,
+   "end_sec": 49.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 49.1,
+   "end_sec": 49.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 49.6,
+   "end_sec": 50.0,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 76,
+   "start_sec": 50.1,
+   "end_sec": 50.5,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 43,
+   "start_sec": 50.8,
+   "end_sec": 51.8,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 47,
+   "start_sec": 50.8,
+   "end_sec": 51.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 50,
+   "start_sec": 50.8,
+   "end_sec": 51.8,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 74,
+   "start_sec": 50.8,
+   "end_sec": 51.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 51.3,
+   "end_sec": 51.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 51.8,
+   "end_sec": 52.2,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 52.3,
+   "end_sec": 52.7,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 48,
+   "start_sec": 53.0,
+   "end_sec": 54.0,
+   "velocity": 80,
+   "role": "bass",
+   "hand": "L"
+  },
+  {
+   "pitch": 52,
+   "start_sec": 53.0,
+   "end_sec": 54.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 55,
+   "start_sec": 53.0,
+   "end_sec": 54.0,
+   "velocity": 80,
+   "role": "chord",
+   "hand": "L"
+  },
+  {
+   "pitch": 72,
+   "start_sec": 53.0,
+   "end_sec": 53.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 71,
+   "start_sec": 53.5,
+   "end_sec": 53.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 69,
+   "start_sec": 54.0,
+   "end_sec": 54.4,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  },
+  {
+   "pitch": 67,
+   "start_sec": 54.5,
+   "end_sec": 54.9,
+   "velocity": 92,
+   "role": "melody",
+   "hand": "R"
+  }
+ ],
+ "sr": 22050
+}
