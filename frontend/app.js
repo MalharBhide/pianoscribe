@@ -144,7 +144,7 @@ async function checkWorker() {
     if (S.workerOk) { el.hidden = true; return; }
     el.hidden = false;
     el.innerHTML = "The background worker isn't running, so new transcriptions will wait in line until one starts. " +
-      "Start it with <code>python -m piano_scribe.worker</code> next to the server, then come back here.";
+      "Start it with <code>docker compose up</code> (or <code>python -m piano_scribe.worker</code> without Docker), then come back here.";
   } catch (e) { S.workerOk = false; }
 }
 
@@ -311,7 +311,7 @@ function openProgress(jid, label, isUpload) {
       if (j.status !== "queued") queuedSince = Date.now();
       else if (Date.now() - queuedSince > 8000 && polls % 5 === 0) {
         try { const r = await api("/ready"); S.workerOk = r.status === "ready"; } catch (e) { S.workerOk = false; }
-        if (!S.workerOk) $("progErr").textContent = "Still waiting in line: no background worker is running. Start one with “python -m piano_scribe.worker” and this job will begin automatically.";
+        if (!S.workerOk) $("progErr").textContent = "Still waiting in line: no background worker is running. Start one with “docker compose up” (or “python -m piano_scribe.worker” without Docker) and this job will begin automatically.";
         else $("progErr").textContent = "";
       } else if (j.status !== "queued" && j.status !== "failed") $("progErr").textContent = "";
       $("progMode").textContent = `${j.mode === "arrangement" ? "Song-or-band arrangement" : "Piano transcription"} · ${j.density}`;

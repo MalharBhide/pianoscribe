@@ -2,7 +2,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY backend/ /app/backend/
-RUN pip install --no-cache-dir -e /app/backend \
+RUN pip install --no-cache-dir --upgrade pip setuptools \
+  && pip install --no-cache-dir -e /app/backend \
   && useradd --create-home --uid 10001 app \
   && mkdir -p /data/storage && chown -R app:app /data /app
 COPY --chown=app:app frontend/ /app/frontend/

@@ -27,6 +27,12 @@ services:
     volumes:
       - piano-scribe-data:/data/storage
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"from piano_scribe.store import heartbeat_status; raise SystemExit(0 if heartbeat_status(180)['alive'] else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
     deploy:
       resources:
         limits:
