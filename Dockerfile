@@ -2,7 +2,12 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY backend/ /app/backend/
-RUN pip install --no-cache-dir --upgrade pip setuptools \
+# build-essential: miniaudio ships no manylinux-aarch64 wheels (any version),
+# so ARM machines (Apple Silicon, ARM servers) compile it from source.
+# Kept installed: the compiled C++ extension needs libstdc++ at runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+  && rm -rf /var/lib/apt/lists/* \
+  && pip install --no-cache-dir --upgrade pip setuptools \
   && pip install --no-cache-dir -e /app/backend \
   && useradd --create-home --uid 10001 app \
   && mkdir -p /data/storage && chown -R app:app /data /app
