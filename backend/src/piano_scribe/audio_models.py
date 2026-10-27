@@ -420,6 +420,38 @@ CHORD_TEMPLATES = {
 }
 
 
+def _drop_orphans(notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Remove glitch blips from a tracked line: notes under 0.15s that sit
+    far (>5 semitones) from BOTH temporal neighbors, or exact-return
+    middles (A-B-A with B short). Runs, steps, near-line ornaments,
+    repeats, and phrase ends are untouched. Same-pitch neighbors bridge
+    across the drop (gap <0.3s) so the line sustains instead of stuttering.
+    Arrangement-only (the piano path preserves performed notes as-is)."""
+    if len(notes) < 3:
+        return notes
+    kill = set()
+    for i in range(1, len(notes) - 1):
+        a, b, d = notes[i - 1], notes[i], notes[i + 1]
+        if b["end_sec"] - b["start_sec"] >= 0.15:
+            continue
+        if min(abs(b["pitch"] - a["pitch"]), abs(b["pitch"] - d["pitch"])) > 5:
+            kill.add(i)
+        elif a["pitch"] == d["pitch"] != b["pitch"]:
+            kill.add(i)
+    if not kill:
+        return notes
+    out = [n for i, n in enumerate(notes) if i not in kill]
+    merged = [out[0]]
+    for n in out[1:]:
+        p = merged[-1]
+        if n["pitch"] == p["pitch"] and 0 <= n["start_sec"] - p["end_sec"] < 0.3:
+            p["end_sec"] = n["end_sec"]
+            p["velocity"] = max(p.get("velocity", 0), n.get("velocity", 0))
+        else:
+            merged.append(n)
+    return merged
+
+
 def _same_harmony(a: str, b: str) -> bool:
     """Same chord for pad/symbol merging: identical, or same root where one
     tone set contains the other (a 7th coloring the tail of a triad region
@@ -816,7 +848,7 @@ class BaselineArranger(Transcriber):
                 peak = max(peak, float(sub[f, s]))
         for x in notes:
             x.pop("peak", None)
-        return notes
+        return _drop_orphans(notes)
 
     def _chords(self, sal: np.ndarray, mids: np.ndarray, times: np.ndarray,
                 anchors: List[float],
@@ -863,9 +895,16 @@ class BaselineArranger(Transcriber):
                         "evidence": {"detected_pitch": m["pitch"],
                                      "detected_start": round(m["start_sec"], 3)}})
         for b in bass:
-            out.append({**b, "hand": "L", "role": "bass", "provenance": "arranged",
+            # Sub-bass (808s etc.) below C2 is inaudible mud on piano and
+            # renders as ledger forests: voice it up one octave. Pitch class
+            # is preserved so harmony anchoring is unaffected, and 47 is
+            # still below every pad tone (>= 48) by construction.
+            p = b["pitch"] + (12 if b["pitch"] < 36 else 0)
+            out.append({**b, "pitch": p, "hand": "L", "role": "bass",
+                        "provenance": "arranged",
                         "evidence": {"detected_pitch": b["pitch"],
-                                     "detected_start": round(b["start_sec"], 3)}})
+                                     "detected_start": round(b["start_sec"], 3),
+                                     "octave_up": b["pitch"] < 36}})
         # LH harmony from chord evidence; unknown chords -> rest (no filler).
         # Each change is clipped to the NEXT change so fast harmony never
         # stacks into giant simultaneous clusters.

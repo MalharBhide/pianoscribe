@@ -31,6 +31,15 @@ Full per-recording numbers: `reports/eval_baseline.json`.
    multi-voice mixes the monophonic lead tracker chops between competing
    voices (lead/ad-libs/harmony); timbre-blind heuristics cannot separate
    them (far-hop veto ablated: broke minute 0.995 -> 0.960, reverted).
+   Arrangement-only cleanup (shipped): sub-0.15 s single-note orphans
+   flanked by far-apart pitches are dropped with same-pitch bridging
+   (exact-return A-B-A exempt from the far test); on Feel No Ways this
+   cut melody 301 -> 223 notes and short-fragment share 13.6% -> 7.6%
+   with zero fixture-metric change (gate 43/43). Orphans >= 0.15 s and
+   genuine fast ornaments are kept; raw detections are untouched
+   (5,138 preserved on that track) so cleanup is reversible by re-run.
+   Bass below C2 (MIDI 36) is voiced up one octave with pitch class
+   kept and an `octave_up` evidence flag (86 notes on Feel No Ways).
 3. **Beats are estimated**, then measures laid in 4/4. Odd meters, rubato,
    and sharp tempo changes will mis-bar (audible timing stays correct —
    notation only).
