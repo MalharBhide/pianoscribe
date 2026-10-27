@@ -594,6 +594,10 @@ class BaselineArranger(Transcriber):
     name = "baseline-arranger"
     version = "0.1.0"
     default_config = {
+        # Band floor ablated at 48 (2026-10): recovered the GT F3 but cost
+        # two top notes to a louder inner voice (0.857 -> 0.50, gate red);
+        # reverted. Tops lose acquisition when gated out; that needs
+        # multi-frame acquisition voting, a bigger project than a constant.
         "melody_lo": 55, "melody_hi": 96, "bass_lo": 28, "bass_hi": 55,
         "density": "standard", "min_melody_sec": 0.12, "min_bass_sec": 0.18,
         "harmonics": 4,
