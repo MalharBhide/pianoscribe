@@ -19,7 +19,7 @@ const S = {
   loop: null, playing: false, source: "piano", speed: 1, t: 0, raf: 0,
   actx: null, master: null, gainL: null, gainR: null, playStartCtx: 0, playStartT: 0,
   schedUntil: 0,
-  pendingAction: null, chat: [], pollTimer: 0, scrubbing: false,
+  pendingAction: null, chat: [], pollTimer: 0, scrubbing: false, workerTimer: 0,
   file: null, recording: null, hasAudio: true, workerOk: true, rollDragged: false,
 };
 
@@ -118,7 +118,7 @@ function go(view) {
   $("crumbSub").textContent = CRUMBS[view][1];
   $("dock").hidden = view !== "studio";
   if (view === "library") refreshLibrary();
-  if (view === "home") refreshRecent();
+  if (view === "home") { refreshRecent(); checkWorker(); }
 }
 document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => go(b.dataset.go)));
 
@@ -134,18 +134,29 @@ async function loadConfig() {
   } catch (e) { $("limitsLine").textContent = "Could not reach the server. Is it running?"; }
   checkWorker();
 }
+const WORKER_WARN_HTML = "The background worker isn't running, so new transcriptions will wait in line until one starts. " +
+  "Start it with <code>docker compose up</code> (or <code>python -m piano_scribe.worker</code> without Docker), then come back here.";
 async function checkWorker() {
   // Surface a dead/missing background worker before the user waits on a job
   // that will never start — the common "transcription never happens" cause.
+  // /ready is 200 + {status:"ready"} when healthy, 503 when the worker is
+  // down, and unreachable when the server itself is down: three cases.
   try {
     const r = await api("/ready");
     S.workerOk = r.status === "ready";
-    const el = $("workerWarn");
-    if (S.workerOk) { el.hidden = true; return; }
-    el.hidden = false;
-    el.innerHTML = "The background worker isn't running, so new transcriptions will wait in line until one starts. " +
-      "Start it with <code>docker compose up</code> (or <code>python -m piano_scribe.worker</code> without Docker), then come back here.";
-  } catch (e) { S.workerOk = false; }
+  } catch (e) {
+    S.workerOk = false;
+    if (!e || e.status !== 503) $("workerWarn").hidden = true; // server down: limits line says that already
+    else { const el = $("workerWarn"); el.hidden = false; el.innerHTML = WORKER_WARN_HTML; }
+    clearTimeout(S.workerTimer);
+    if (S.view === "home") S.workerTimer = setTimeout(checkWorker, 20000);
+    return;
+  }
+  const el = $("workerWarn");
+  if (S.workerOk) el.hidden = true;
+  else { el.hidden = false; el.innerHTML = WORKER_WARN_HTML; }
+  clearTimeout(S.workerTimer);
+  if (S.view === "home") S.workerTimer = setTimeout(checkWorker, 20000);
 }
 
 /* ---------- home: upload ---------- */

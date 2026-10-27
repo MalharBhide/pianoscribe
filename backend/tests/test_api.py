@@ -80,6 +80,17 @@ def test_edit_requantizes_notation():
     assert after == 3.0  # notation re-derived from the edited 1.5s duration
 
 
+def test_ready_contract():
+    # Frontend reads r.status === "ready"; pin the shape (a mismatch here
+    # once showed the worker-missing banner permanently).
+    r = client.get("/ready")
+    body = r.json()
+    assert body["status"] in ("ready", "degraded")
+    assert body["ready"] is (body["status"] == "ready")
+    assert r.status_code == (200 if body["ready"] else 503)
+    assert "worker" in body["checks"]
+
+
 def test_sniff_kinds():
     from piano_scribe.api import sniff_audio_kind
     assert sniff_audio_kind(b"RIFF....WAVE" + b"\x00" * 100) == "wav"

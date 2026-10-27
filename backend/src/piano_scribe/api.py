@@ -581,4 +581,6 @@ def ready() -> JSONResponse:
     checks["worker"] = {"ok": hb["alive"], **{k: v for k, v in hb.items() if k != "alive"}}
     if not hb["alive"]:
         ok = False
-    return JSONResponse({"ready": ok, "checks": checks}, status_code=200 if ok else 503)
+    return JSONResponse({"status": "ready" if ok else "degraded",
+                         "ready": ok, "checks": checks},
+                        status_code=200 if ok else 503)
