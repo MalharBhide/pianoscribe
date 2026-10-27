@@ -65,21 +65,25 @@ def _decode_wav(path: str) -> Tuple[np.ndarray, int, int, str]:
             if nframes <= 0:
                 raise AudioError("empty audio file (0 frames)")
             raw = w.readframes(nframes)
-    except wave.Error as e:
+        if width == 1:
+            pcm = (np.frombuffer(raw, dtype=np.uint8).astype(np.float32) - 128.0) / 128.0
+        elif width == 2:
+            pcm = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+        elif width == 4:
+            pcm = np.frombuffer(raw, dtype=np.int32).astype(np.float32) / 2147483648.0
+        else:
+            raise AudioError(f"unsupported WAV bit depth: {width * 8}-bit")
+        if nch > 1:
+            pcm = pcm.reshape(-1, nch)
+        else:
+            pcm = pcm.reshape(-1, 1)
+        return pcm, sr, nch, "stdlib-wave"
+    except AudioError:
+        raise
+    except (wave.Error, EOFError, ValueError) as e:
+        # Truncated headers (EOFError) and mid-frame chops (reshape
+        # ValueError) are corrupt files, not server bugs.
         raise AudioError(f"corrupt or unsupported WAV file: {e}")
-    if width == 1:
-        pcm = (np.frombuffer(raw, dtype=np.uint8).astype(np.float32) - 128.0) / 128.0
-    elif width == 2:
-        pcm = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
-    elif width == 4:
-        pcm = np.frombuffer(raw, dtype=np.int32).astype(np.float32) / 2147483648.0
-    else:
-        raise AudioError(f"unsupported WAV bit depth: {width * 8}-bit")
-    if nch > 1:
-        pcm = pcm.reshape(-1, nch)
-    else:
-        pcm = pcm.reshape(-1, 1)
-    return pcm, sr, nch, "stdlib-wave"
 
 
 def _decode_miniaudio(path: str) -> Tuple[np.ndarray, int, int, str]:

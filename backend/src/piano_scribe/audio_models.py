@@ -48,9 +48,14 @@ class Transcriber:
 # -- shared DSP -------------------------------------------------------------
 def stft_mag(mono: np.ndarray, sr: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     from scipy.signal import stft
-    _, t, z = stft(mono, fs=sr, window="hann", nperseg=NPERSEG,
-                   noverlap=NPERSEG - HOP, padded=True, boundary="zeros")
-    return np.abs(z).astype(np.float32), np.asarray(t), np.fft.rfftfreq(NPERSEG, 1.0 / sr)
+    # Clips shorter than one window: shrink the window to the input (scipy
+    # shrinks nperseg but keeps a fixed noverlap, which raises). Exact match
+    # (no floor) keeps the returned freq bins aligned with the spectrum.
+    nperseg = min(NPERSEG, len(mono))
+    noverlap = max(0, min(nperseg - 1, nperseg - HOP))
+    _, t, z = stft(mono, fs=sr, window="hann", nperseg=nperseg,
+                   noverlap=noverlap, padded=True, boundary="zeros")
+    return np.abs(z).astype(np.float32), np.asarray(t), np.fft.rfftfreq(nperseg, 1.0 / sr)
 
 
 def _harmonic_bins(mids: np.ndarray, freqs: np.ndarray,

@@ -22,13 +22,19 @@ from .store import artifact_dir
 def transcribe_signal(mono: np.ndarray, sr: int, mode: str, density: str,
                       progress: Optional[Callable[[float, str], None]] = None,
                       window_sec: float = 30.0, overlap_sec: float = 5.0,
-                      evidence_mode: bool = False) -> Dict[str, Any]:
+                      evidence_mode: bool = False,
+                      transcriber_override: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Run a transcriber over windows; merge to absolute timeline.
 
     evidence_mode: run the piano detector as the raw-evidence layer even in
     arrangement mode (its output is stored, not shown as the score).
+    transcriber_override maps computed registry keys (e.g. {"piano":
+    "piano-neural"}) for model-comparison experiments; default None keeps
+    the shipped DSP path. Unknown keys raise KeyError (fail fast).
     """
     key = "piano" if (mode == "piano" or evidence_mode) else "arrangement"
+    if transcriber_override and key in transcriber_override:
+        key = transcriber_override[key]
     tx = REGISTRY[key]
     limits_cfg = {"density": density}
     dur = len(mono) / float(sr)
@@ -75,7 +81,8 @@ def transcribe_signal(mono: np.ndarray, sr: int, mode: str, density: str,
 
 
 def build_score(audio_path: str, mode: str, density: str, title: str,
-                progress: Optional[Callable[[float, str], None]] = None) -> Dict[str, Any]:
+                progress: Optional[Callable[[float, str], None]] = None,
+                transcriber_override: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Full pipeline for one upload. Returns {score, audio_info, timing}."""
     t0 = time.time()
     lim = get_limits()
@@ -84,12 +91,14 @@ def build_score(audio_path: str, mode: str, density: str, title: str,
     if mode not in ("piano", "arrangement"):
         raise AudioError(f"unknown mode '{mode}'")
     main = transcribe_signal(mono, lim.target_sr, mode, density, progress,
-                             lim.window_sec, lim.overlap_sec)
+                             lim.window_sec, lim.overlap_sec,
+                             transcriber_override=transcriber_override)
     raw: List[Dict[str, Any]] = list(main["notes"])
     if mode == "arrangement":
         # Raw detected evidence layer stays separate from arrangement choices.
         ev = transcribe_signal(mono, lim.target_sr, mode, density, None,
-                               lim.window_sec, lim.overlap_sec, evidence_mode=True)
+                               lim.window_sec, lim.overlap_sec, evidence_mode=True,
+                               transcriber_override=transcriber_override)
         raw = ev["notes"]
         for r in raw:
             r["provenance"] = "detected"

@@ -68,12 +68,13 @@ def midi_roundtrip(score):
             "onset_recall": round(found / len(ref), 4) if ref else 1.0}
 
 
-def run_one(name, mode, density, tol):
+def run_one(name, mode, density, tol, override=None):
     fx = os.path.join(ROOT, "fixtures", name)
     with open(fx + ".json") as f:
         gt = json.load(f)["notes"]
     t0 = time.time()
-    out = build_score(fx + ".wav", mode, density, name)
+    out = build_score(fx + ".wav", mode, density, name,
+                      transcriber_override=override)
     wall = round(time.time() - t0, 2)
     score = out["score"]
     dur = out["audio_info"]["duration_sec"]
@@ -98,7 +99,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="baseline")
     ap.add_argument("--tol", type=float, default=0.05)
+    ap.add_argument("--transcriber", default="",
+                    help="registry override for model comparison, e.g. "
+                    "'piano:piano-neural' (requires weights; see docs/NEURAL_SPIKE.md)")
     args = ap.parse_args()
+    override = None
+    if args.transcriber:
+        from piano_scribe.neural_models import register_optional_models
+        from piano_scribe.audio_models import REGISTRY
+        added = register_optional_models(REGISTRY)
+        override = dict(kv.split(":", 1) for kv in args.transcriber.split(","))
+        missing = [v for v in override.values() if v not in REGISTRY]
+        if missing:
+            raise SystemExit(f"transcriber(s) unavailable (added now: {added}): "
+                             f"{missing}. Fetch weights first; see docs/NEURAL_SPIKE.md")
     plan = ([(f, "piano", "standard") for f in FIXTURES]
             + [("synth_chords", "arrangement", d) for d in ("simple", "standard", "detailed")]
             + [("synth_minute", "arrangement", "standard"),
@@ -107,7 +121,7 @@ def main():
     for name, mode, density in plan:
         print(f"eval {name} mode={mode} density={density} ...", flush=True)
         try:
-            r = run_one(name, mode, density, args.tol)
+            r = run_one(name, mode, density, args.tol, override)
             results.append(r)
             print(f"  F1 raw={r['raw']['f1']} final={r['final']['f1']} "
                   f"melody={r['final']['melody_f1']} wall={r['wall_sec']}s", flush=True)

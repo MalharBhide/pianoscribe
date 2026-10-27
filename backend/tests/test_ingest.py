@@ -8,6 +8,7 @@ import pytest
 
 from piano_scribe.audio_ingest import (AudioError, Window, iter_windows,
                                        load_audio, merge_window_notes)
+from piano_scribe.pipeline import build_score
 
 
 def write_wav(path, samples, sr=22050, nch=1):
@@ -60,6 +61,66 @@ def test_duration_limit(tmp_path):
     write_wav(p, [0.1] * 22050)
     with pytest.raises(AudioError, match="over the configured limit"):
         load_audio(p, max_duration_sec=0.5)
+
+
+def _tone_wav(path, dur_sec, sr=22050, freq=440.0, nch=1):
+    n = int(dur_sec * sr)
+    write_wav(path, [0.5 * math.sin(2 * math.pi * freq * i / sr) for i in range(n)],
+              sr=sr, nch=nch)
+
+
+def test_truncated_header_is_audio_error(tmp_path):
+    full = str(tmp_path / "full.wav")
+    _tone_wav(full, 0.5)
+    head = str(tmp_path / "head.wav")
+    with open(full, "rb") as f, open(head, "wb") as g:
+        g.write(f.read(20))  # chopped inside the RIFF header
+    with pytest.raises(AudioError, match="corrupt"):
+        load_audio(head)
+
+
+def test_odd_midframe_truncation_is_audio_error(tmp_path):
+    full = str(tmp_path / "full.wav")
+    _tone_wav(full, 0.5, nch=2)
+    odd = str(tmp_path / "odd.wav")
+    with open(full, "rb") as f, open(odd, "wb") as g:
+        g.write(f.read(44 + 1458))  # 729 samples: indivisible by 2 channels
+    with pytest.raises(AudioError, match="corrupt"):
+        load_audio(odd)
+
+
+def test_subframe_clip_scores_without_crash(tmp_path):
+    p = str(tmp_path / "tiny.wav")
+    _tone_wav(p, 0.05)  # far shorter than one STFT window
+    for mode in ("piano", "arrangement"):
+        out = build_score(p, mode, "standard", "tiny")
+        assert out["audio_info"]["duration_sec"] == pytest.approx(0.05, abs=0.01)
+        assert isinstance(out["score"].notes, list)
+
+
+def test_all_silence_scores_empty_with_warning(tmp_path):
+    p = str(tmp_path / "sil.wav")
+    write_wav(p, [0.0] * 22050)  # 1.0 s of digital silence
+    mono, info = load_audio(p)
+    assert any("quiet" in w for w in info.warnings)
+    out = build_score(p, "piano", "standard", "sil")
+    assert out["score"].notes == []
+
+
+def test_extreme_sample_rates_preserve_duration(tmp_path):
+    for sr in (8000, 192000):  # polyphase path and linear-fallback path
+        p = str(tmp_path / f"r{sr}.wav")
+        _tone_wav(p, 1.0, sr=sr)
+        mono, info = load_audio(p)
+        assert info.duration_sec == pytest.approx(1.0, abs=0.005)
+        assert len(mono) == pytest.approx(22050, abs=25)
+
+
+def test_mp3_named_garbage_is_audio_error(tmp_path):
+    bad = tmp_path / "bad.mp3"
+    bad.write_bytes(b"ID3" + b"\x00" * 500 + b"not really audio" * 40)
+    with pytest.raises(AudioError):
+        load_audio(str(bad))
 
 
 def test_windows_cover_without_drift():

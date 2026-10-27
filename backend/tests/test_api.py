@@ -29,6 +29,17 @@ def test_upload_rejects_bad_inputs():
     assert r.status_code == 400
 
 
+def test_upload_rejects_over_limit_with_actual_value(monkeypatch):
+    monkeypatch.setenv("PIANO_SCRIBE_MAX_UPLOAD_MB", "1")
+    big = _wav_bytes(secs=25.0)  # ~1.1 MB of real audio
+    assert len(big) > 1024 * 1024
+    r = client.post("/api/uploads",
+                    files={"file": ("t.wav", big, "audio/wav")},
+                    data={"mode": "piano"})
+    assert r.status_code == 400
+    assert "1 MB limit" in r.json()["detail"]  # real value, never "0 MB"
+
+
 def _wav_bytes(sr=22050, secs=1.0):
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
