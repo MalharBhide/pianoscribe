@@ -135,15 +135,20 @@ MAJ_TONIC = {0: 0, 1: 7, 2: 2, 3: 9, 4: 4, 5: 11, 6: 6, 7: 1,
              -1: 5, -2: 10, -3: 3, -4: 8, -5: 1, -6: 6, -7: 11}
 
 
-def detect_key(notes: List[Note]) -> int:
+def detect_key(notes: List[Any]) -> int:
     """Key signature in fifths (-7..7) minimizing duration-weighted
     out-of-scale pitch classes. Ties prefer C, then fewer accidentals,
-    then the sharp side. (Relative minors share the signature.)"""
+    then the sharp side. (Relative minors share the signature.)
+    Accepts Note objects or plain note dicts (for stored scores)."""
     if not notes:
         return 0
     weights: Dict[int, float] = {}
     for n in notes:
-        weights[n.pitch % 12] = weights.get(n.pitch % 12, 0.0) + max(0.1, n.end_sec - n.start_sec)
+        if isinstance(n, dict):
+            pitch, start, end = int(n.get("pitch", 60)), float(n.get("start_sec", 0.0)), float(n.get("end_sec", 0.0))
+        else:
+            pitch, start, end = n.pitch, n.start_sec, n.end_sec
+        weights[pitch % 12] = weights.get(pitch % 12, 0.0) + max(0.0, end - start)
     cands = [0]
     for k in range(1, 8):
         cands += [k, -k]
@@ -563,6 +568,21 @@ def glyph_tie(x1: float, y: float, x2: float, below: bool) -> List[tuple]:
     return [("M", x1, y + 2 * s), ("Q", (x1 + x2) / 2, y + 9 * s, x2, y + 2 * s)]
 
 
+def glyph_brace(x: float, y_top: float, y_bot: float) -> List[List[tuple]]:
+    """Grand-staff brace: two strokes meeting at a middle point poking
+    left. x is the staff-attach line; the brace bulges ~18px left."""
+    mid = (y_top + y_bot) / 2
+    w = 13.0
+    return [
+        [("M", x + 3, y_top - 3),
+         ("C", x - 8, y_top + 2, x - w, y_top + 10, x - w, mid - 14),
+         ("C", x - w, mid - 6, x - w - 2, mid - 2, x - w - 5, mid)],
+        [("M", x + 3, y_bot + 3),
+         ("C", x - 8, y_bot - 2, x - w, y_bot - 10, x - w, mid + 14),
+         ("C", x - w, mid + 6, x - w - 2, mid + 2, x - w - 5, mid)],
+    ]
+
+
 def _ledger_ys(steps: int, top: float) -> List[float]:
     out = []
     if steps > 8:
@@ -659,8 +679,15 @@ def _layout_staff(score: Score, hand: str, clef: str, top: float,
                   ms: float, me: float, x0: float, mw: float,
                   prev_heads: Dict[str, Dict[str, Any]], gidx: int,
                   key: int = 0) -> Dict[str, Any]:
+    # Barline gravity: the beat grid jitters ±30ms against performed onsets,
+    # so a barline can slice a hair off a note's edge. Notes starting a sliver
+    # before the barline (but sounding past it) belong to the next measure;
+    # notes ending a sliver after the downbeat end at it. Sustained notes
+    # spanning well past the line still tie across it.
     mnotes = [n for n in score.notes
-              if n.hand == hand and n.end_sec > ms and n.start_sec < me]
+              if n.hand == hand and n.end_sec > ms and n.start_sec < me
+              and not (me - 0.06 <= n.start_sec < me and n.end_sec > me + 0.05)
+              and not (n.start_sec < ms - 0.05 and ms < n.end_sec <= ms + 0.06)]
     mnotes.sort(key=lambda n: (max(n.start_sec, ms), n.pitch))
     clusters: List[List[Any]] = []
     for n in mnotes:
@@ -682,13 +709,28 @@ def _layout_staff(score: Score, hand: str, clef: str, top: float,
     # Pass 1: cluster records (heads + stems); pass 2 beams them (mutating
     # stem tips), pass 3 emits heads/ties.
     records = []
-    for t, grp in clusters:
+    for ci, (t, grp) in enumerate(clusters):
         frac = (t - ms) / max(1e-6, me - ms)
         cx = x0 + 12 + frac * (mw - 24)
+        nxt = clusters[ci + 1][0] if ci + 1 < len(clusters) else me
         infos = []
         for n in grp:
             steps, alter = staff_steps(n.pitch, clef, key)
             bon, dur_b = notation_beats(n, score.tempo)
+            # Gravity-sliver starts (within 60ms before the downbeat) absorb
+            # like in-measure notes; only true ties (sustained from deep in
+            # the previous measure) keep exact durations.
+            if n.start_sec >= ms - 0.06 - 1e-6 and nxt - t > 1e-6:
+                # Articulation-gap absorption: a note filling most of its
+                # inter-onset interval reads as the interval's simple value
+                # (detached quarter), not a dotted fragment plus a sliver
+                # rest too small to engrave. True short notes keep rests.
+                ioi_b = seconds_to_beats(min(nxt, me), score.tempo) - bon
+                for base, _nm, _fl in DISPLAY_VALS:
+                    if abs(ioi_b - base) <= 0.10 * base + 0.02 \
+                            and 0.6 * base <= dur_b < base - 0.02:
+                        dur_b = base
+                        break
             name, dots, flags = display_value(dur_b)
             infos.append({"n": n, "steps": steps, "alter": alter, "dur_name": name,
                           "dots": dots, "flags": flags, "beat": bon,
@@ -801,7 +843,9 @@ def layout_score(score: Score, max_measures: int = 400) -> Dict[str, Any]:
     """Full engraving layout shared by the SVG and PDF renderers."""
     end_sec = max([n.end_sec for n in score.notes], default=1.0)
     bounds = measure_bounds(score.tempo, end_sec)[:max_measures]
-    per_system = 4
+    # Sparse arrangements read better with more bars per system; dense
+    # piano textures keep 4 so measures don't crowd.
+    per_system = 6 if score.mode == "arrangement" else 4
     key = int(getattr(score, "key_fifths", 0) or 0)
     key = max(-7, min(7, key))
     n_acc = abs(key)
@@ -811,7 +855,10 @@ def layout_score(score: Score, max_measures: int = 400) -> Dict[str, Any]:
     for si in range(0, nbars, per_system):
         sys_bounds = bounds[si:si + per_system] or [(0.0, 1.0)]
         sys_idx = si // per_system
-        y0 = 54 + sys_idx * 150.0
+        # All systems sit 16px lower than before, leaving room for the
+        # tempo mark above the first staff; the 150px pitch is uniform so
+        # one system's chord symbols never overprint the system above.
+        y0 = 84 + sys_idx * 150.0
         treble_top, bass_top = y0 + 8, y0 + 8 + 5 * SPACE + 26
         if n_acc:
             key_end = 54 + (n_acc - 1) * 9 + 14
@@ -839,7 +886,7 @@ def layout_score(score: Score, max_measures: int = 400) -> Dict[str, Any]:
                 del prev_heads[nid]
             sys["measures"].append(meas)
         systems.append(sys)
-    H = len(systems) * 150.0 + 60
+    H = len(systems) * 150.0 + 80
     return {"systems": systems, "W": SYSTEM_W, "H": H, "title": score.title,
             "bpb": max(1, score.tempo.beats_per_bar)}
 
@@ -887,6 +934,17 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                 s.write(f'<line class="nl" x1="{left}" y1="{yy}" x2="{left + line_w}" y2="{yy}"/>\n')
         s.write(svg_paths(glyph_g_clef(38, treble_top), "#1a1a1a", 2.0))
         s.write(svg_paths(glyph_f_clef(38, bass_top), "#1a1a1a", 2.2))
+        s.write(svg_paths(glyph_brace(30, treble_top, bass_top + 4 * SPACE),
+                          "#1a1a1a", 2.0))
+        if si == 0:
+            bpm = int(round(score.tempo.bpm))
+            tx, ty = left + 2, treble_top - 38
+            s.write(f'<ellipse cx="{tx + 5:.1f}" cy="{ty:.1f}" rx="5" ry="3.8" fill="#1a1a1a" '
+                    f'transform="rotate(-18 {tx + 5:.1f} {ty:.1f})"/>\n'
+                    f'<line x1="{tx + 9.5:.1f}" y1="{ty - 1:.1f}" x2="{tx + 9.5:.1f}" y2="{ty - 27:.1f}" '
+                    f'stroke="#1a1a1a" stroke-width="1.3"/>\n'
+                    f'<text x="{tx + 14:.1f}" y="{ty + 4:.1f}" font-family="sans-serif" '
+                    f'font-size="12" font-weight="bold" fill="#1a1a1a">= {bpm}</text>\n')
         fy = bass_top + SPACE
         s.write(f'<circle cx="44" cy="{fy - 1:.1f}" r="2" fill="#1a1a1a"/>\n'
                 f'<circle cx="48" cy="{fy - 4.5:.1f}" r="1.7" fill="#1a1a1a"/>\n'
@@ -998,6 +1056,12 @@ def _chord_placements(lay: Dict[str, Any], chords: List[Dict[str, Any]]):
                 if meas["ms"] - 1e-6 <= t < meas["me"] - 1e-6:
                     lay_m = (meas, sys["treble_top"])
         if lay_m is None:
+            # Pickup-zone chord (starts before the first barline): pin to
+            # the first measure instead of dropping the symbol.
+            first = lay["systems"][0]["measures"][0]
+            if t < first["ms"]:
+                lay_m = (first, lay["systems"][0]["treble_top"])
+        if lay_m is None:
             continue
         meas, treble_top = lay_m
         cx = meas["x0"] + 4 + max(0.0, (t - meas["ms"]) / max(1e-6, meas["me"] - meas["ms"])) * (meas["mw"] - 8)
@@ -1086,6 +1150,16 @@ def to_pdf_bytes(score: Score) -> bytes:
         tr = lambda x, y: (X(x), Y(y))
         _rl_draw_ops(c, glyph_g_clef(38, treble_top), tr, 1.2)
         _rl_draw_ops(c, glyph_f_clef(38, bass_top), tr, 1.3)
+        _rl_draw_ops(c, glyph_brace(30, treble_top, bass_top + 4 * SPACE), tr, 1.2)
+        if si == 0:
+            bpm = int(round(score.tempo.bpm))
+            tx, ty = left + 2, treble_top - 38
+            c.ellipse(X(tx), Y(ty + 3.8 * k), X(tx) + 10 * k,
+                      Y(ty - 3.8 * k), stroke=0, fill=1)
+            c.setLineWidth(0.9)
+            c.line(X(tx) + 9.5 * k, Y(ty - 1), X(tx) + 9.5 * k, Y(ty - 27))
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(X(tx) + 14 * k, Y(ty + 4) - 3, f"= {bpm}")
         fy = bass_top + SPACE
         for dx, dy, r in ((6, -1, 2.0), (10, -4.5, 1.7), (10, 4.5, 1.7)):
             c.circle(X(38 + dx), Y(fy + dy), r * k, stroke=0, fill=1)

@@ -212,6 +212,14 @@ def get_project(pid: str) -> Optional[Dict[str, Any]]:
             return None
         d = dict(row)
         d["score"] = json.loads(d.pop("score_json"))
+        if "key_fifths" not in d["score"]:
+            # Backfill scores stored before key detection existed so old
+            # projects don't render in C with wall-to-wall accidentals.
+            from .notation import detect_key  # local import: notation never imports store
+            d["score"]["key_fifths"] = detect_key(d["score"].get("notes", []))
+            c.execute("UPDATE projects SET score_json=? WHERE id=?",
+                      (json.dumps(d["score"]), pid))
+            c.commit()
         return d
     finally:
         c.close()

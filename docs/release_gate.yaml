@@ -13,7 +13,7 @@ piano:
   drift_ms_per_min_max: 20   # cumulative timing drift ceiling
 
 arrangement:
-  melody_f1_min: 0.40
+  melody_f1_min: 0.70          # ratchet: rework measures 0.83-0.99 on synth fixtures
   harmony_plausibility_min: 3.0   # human rubric 1-5, when judged
   max_extra_per_sec: 2.0
   onset_p95_ms_max: 150

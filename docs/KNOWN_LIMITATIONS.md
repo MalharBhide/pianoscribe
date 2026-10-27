@@ -12,17 +12,19 @@
 
 Piano mode: melody F1 1.00, chords F1 0.81 (recovery 0.75), repeats 0.82,
 1-min excerpt F1 0.84; melody coverage 1.00 everywhere; MIDI onset recall
-1.00. Arrangement: melody F1 0.86–0.89; 83% of literal "extras" are
-harmonic voicings; 0.98 non-harmonic extras/s on the minute excerpt.
+1.00. Arrangement melody F1: chords 0.86, 1-min 1.00, dense mix 0.83;
+94% of literal "extras" are harmonic voicings; 0.07 non-harmonic
+extras/s on the minute excerpt. Dense-mix repeats (0.36) and fast
+octave-doubled lines remain the weak spots.
 Full per-recording numbers: `reports/eval_baseline.json`.
 
 ## Limitations (be honest about all of these)
 
 1. **Synth-fixture baselines only.** No real piano or mixed-song corpus has
    been evaluated. Expect lower accuracy on reverberant, dense, detuned, or
-   mastered recordings — e.g. a 20 s slice of a real mastered MP3 yields
-   ~280 raw detections (over-detection on dense mixes), versus clean output
-   on sparse synth. Neither mode is production-ready.
+   mastered recordings — piano-mode raw detections still over-fire on dense
+   commercial mixes (arrangement mode constrains output to melody + bass +
+   pads instead). Neither mode is production-ready.
 2. **DSP detectors, not neural AMT.** Typical errors: soft octave doublings
    removed as ghosts, low minor-2nd clusters suppressed, fast passagework
    merged, pedal/sustain approximated by release hysteresis.

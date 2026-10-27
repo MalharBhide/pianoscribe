@@ -6,7 +6,7 @@
    "fixture": "synth_melody",
    "mode": "piano",
    "density": "standard",
-   "wall_sec": 0.04,
+   "wall_sec": 0.05,
    "audio_sec": 5.0199546485260775,
    "raw": {
     "tol_sec": 0.05,
@@ -85,7 +85,7 @@
     "melody_f1": 1.0
    },
    "timing": {
-    "total_sec": 0.04,
+    "total_sec": 0.05,
     "audio_sec": 5.02
    },
    "processing": {
@@ -118,7 +118,7 @@
    "fixture": "synth_chords",
    "mode": "piano",
    "density": "standard",
-   "wall_sec": 0.04,
+   "wall_sec": 0.05,
    "audio_sec": 4.7,
    "raw": {
     "tol_sec": 0.05,
@@ -197,7 +197,7 @@
     "melody_f1": 1.0
    },
    "timing": {
-    "total_sec": 0.04,
+    "total_sec": 0.05,
     "audio_sec": 4.7
    },
    "processing": {
@@ -342,7 +342,7 @@
    "fixture": "synth_minute",
    "mode": "piano",
    "density": "standard",
-   "wall_sec": 0.59,
+   "wall_sec": 0.62,
    "audio_sec": 55.2,
    "raw": {
     "tol_sec": 0.05,
@@ -421,7 +421,7 @@
     "melody_f1": 1.0
    },
    "timing": {
-    "total_sec": 0.59,
+    "total_sec": 0.62,
     "audio_sec": 55.2
    },
    "processing": {
@@ -454,7 +454,7 @@
    "fixture": "synth_chords",
    "mode": "arrangement",
    "density": "simple",
-   "wall_sec": 0.08,
+   "wall_sec": 0.09,
    "audio_sec": 4.7,
    "raw": {
     "tol_sec": 0.05,
@@ -503,15 +503,15 @@
     "recall": 0.4375,
     "f1": 0.6087,
     "onset_err_sec": {
-     "mean": 0.0279,
-     "median": 0.0316,
-     "p95": 0.0402,
+     "mean": 0.0345,
+     "median": 0.0375,
+     "p95": 0.0461,
      "n": 7
     },
     "release_err_sec": {
-     "mean": 0.0108,
-     "median": 0.0114,
-     "p95": 0.0205,
+     "mean": 0.0175,
+     "median": 0.0146,
+     "p95": 0.0291,
      "n": 7
     },
     "duration_acc": 1.0,
@@ -533,7 +533,7 @@
     "melody_f1": 0.8571
    },
    "timing": {
-    "total_sec": 0.08,
+    "total_sec": 0.09,
     "audio_sec": 4.7
    },
    "processing": {
@@ -546,7 +546,7 @@
      "bass_hi": 55,
      "density": "simple",
      "min_melody_sec": 0.12,
-     "min_bass_sec": 0.25,
+     "min_bass_sec": 0.18,
      "harmonics": 4
     },
     "processing_version": "slice-0.2.0",
@@ -609,37 +609,37 @@
    "final": {
     "tol_sec": 0.05,
     "n_ref": 16,
-    "n_est": 22,
-    "n_hit": 12,
-    "precision": 0.5455,
-    "recall": 0.75,
-    "f1": 0.6316,
+    "n_est": 13,
+    "n_hit": 9,
+    "precision": 0.6923,
+    "recall": 0.5625,
+    "f1": 0.6207,
     "onset_err_sec": {
-     "mean": 0.0215,
-     "median": 0.017,
-     "p95": 0.0402,
-     "n": 12
+     "mean": 0.03,
+     "median": 0.0316,
+     "p95": 0.0461,
+     "n": 9
     },
     "release_err_sec": {
-     "mean": 0.0506,
-     "median": 0.0175,
-     "p95": 0.2297,
-     "n": 12
+     "mean": 0.0517,
+     "median": 0.0205,
+     "p95": 0.1712,
+     "n": 9
     },
-    "duration_acc": 0.8333,
-    "extra": 10,
-    "missing": 4,
-    "extra_per_sec": 2.1277,
-    "harmonic_extra": 10,
+    "duration_acc": 1.0,
+    "extra": 4,
+    "missing": 7,
+    "extra_per_sec": 0.8511,
+    "harmonic_extra": 4,
     "nonharmonic_extra": 0,
     "nonharmonic_extra_per_sec": 0.0,
     "repeat_total": 0,
     "repeat_preserved": 0,
     "repeat_rate": 1.0,
     "chords_total": 4,
-    "chords_full": 2,
-    "chord_recovery": 0.5,
-    "extra_in_chord_mean": 1.75,
+    "chords_full": 1,
+    "chord_recovery": 0.25,
+    "extra_in_chord_mean": 0.25,
     "melody_precision": 1.0,
     "melody_recall": 0.75,
     "melody_f1": 0.8571
@@ -658,7 +658,7 @@
      "bass_hi": 55,
      "density": "standard",
      "min_melody_sec": 0.12,
-     "min_bass_sec": 0.25,
+     "min_bass_sec": 0.18,
      "harmonics": 4
     },
     "processing_version": "slice-0.2.0",
@@ -667,9 +667,9 @@
     "windows": 1
    },
    "midi_roundtrip": {
-    "matches": 22,
-    "ref": 22,
-    "est": 22,
+    "matches": 13,
+    "ref": 13,
+    "est": 13,
     "match_rate": 1.0,
     "onset_recall": 1.0
    }
@@ -678,7 +678,7 @@
    "fixture": "synth_chords",
    "mode": "arrangement",
    "density": "detailed",
-   "wall_sec": 0.08,
+   "wall_sec": 0.09,
    "audio_sec": 4.7,
    "raw": {
     "tol_sec": 0.05,
@@ -721,43 +721,43 @@
    "final": {
     "tol_sec": 0.05,
     "n_ref": 16,
-    "n_est": 25,
-    "n_hit": 8,
-    "precision": 0.32,
-    "recall": 0.5,
-    "f1": 0.3902,
+    "n_est": 18,
+    "n_hit": 7,
+    "precision": 0.3889,
+    "recall": 0.4375,
+    "f1": 0.4118,
     "onset_err_sec": {
-     "mean": 0.0244,
-     "median": 0.0272,
-     "p95": 0.0402,
-     "n": 8
+     "mean": 0.0345,
+     "median": 0.0375,
+     "p95": 0.0461,
+     "n": 7
     },
     "release_err_sec": {
-     "mean": 0.0912,
-     "median": 0.0116,
-     "p95": 0.6541,
-     "n": 8
+     "mean": 0.0175,
+     "median": 0.0146,
+     "p95": 0.0291,
+     "n": 7
     },
-    "duration_acc": 0.875,
-    "extra": 17,
-    "missing": 8,
-    "extra_per_sec": 3.617,
-    "harmonic_extra": 16,
-    "nonharmonic_extra": 1,
-    "nonharmonic_extra_per_sec": 0.2128,
+    "duration_acc": 1.0,
+    "extra": 11,
+    "missing": 9,
+    "extra_per_sec": 2.3404,
+    "harmonic_extra": 8,
+    "nonharmonic_extra": 3,
+    "nonharmonic_extra_per_sec": 0.6383,
     "repeat_total": 0,
     "repeat_preserved": 0,
     "repeat_rate": 1.0,
     "chords_total": 4,
     "chords_full": 0,
     "chord_recovery": 0.0,
-    "extra_in_chord_mean": 0.75,
+    "extra_in_chord_mean": 0.25,
     "melody_precision": 1.0,
     "melody_recall": 0.75,
     "melody_f1": 0.8571
    },
    "timing": {
-    "total_sec": 0.08,
+    "total_sec": 0.09,
     "audio_sec": 4.7
    },
    "processing": {
@@ -770,7 +770,7 @@
      "bass_hi": 55,
      "density": "detailed",
      "min_melody_sec": 0.12,
-     "min_bass_sec": 0.25,
+     "min_bass_sec": 0.18,
      "harmonics": 4
     },
     "processing_version": "slice-0.2.0",
@@ -779,9 +779,9 @@
     "windows": 1
    },
    "midi_roundtrip": {
-    "matches": 25,
-    "ref": 25,
-    "est": 25,
+    "matches": 18,
+    "ref": 18,
+    "est": 18,
     "match_rate": 1.0,
     "onset_recall": 1.0
    }
@@ -790,7 +790,7 @@
    "fixture": "synth_minute",
    "mode": "arrangement",
    "density": "standard",
-   "wall_sec": 1.08,
+   "wall_sec": 1.09,
    "audio_sec": 55.2,
    "raw": {
     "tol_sec": 0.05,
@@ -833,43 +833,43 @@
    "final": {
     "tol_sec": 0.05,
     "n_ref": 175,
-    "n_est": 445,
-    "n_hit": 130,
-    "precision": 0.2921,
-    "recall": 0.7429,
-    "f1": 0.4194,
+    "n_est": 206,
+    "n_hit": 139,
+    "precision": 0.6748,
+    "recall": 0.7943,
+    "f1": 0.7297,
     "onset_err_sec": {
-     "mean": 0.0231,
-     "median": 0.0217,
-     "p95": 0.038,
-     "n": 130
+     "mean": 0.0311,
+     "median": 0.0325,
+     "p95": 0.0454,
+     "n": 139
     },
     "release_err_sec": {
-     "mean": 0.067,
-     "median": 0.0098,
-     "p95": 0.6116,
-     "n": 130
+     "mean": 0.1435,
+     "median": 0.0239,
+     "p95": 0.7655,
+     "n": 139
     },
-    "duration_acc": 0.8769,
-    "extra": 315,
-    "missing": 45,
-    "extra_per_sec": 5.7065,
-    "harmonic_extra": 261,
-    "nonharmonic_extra": 54,
-    "nonharmonic_extra_per_sec": 0.9783,
+    "duration_acc": 0.8273,
+    "extra": 67,
+    "missing": 36,
+    "extra_per_sec": 1.2138,
+    "harmonic_extra": 63,
+    "nonharmonic_extra": 4,
+    "nonharmonic_extra_per_sec": 0.0725,
     "repeat_total": 0,
     "repeat_preserved": 0,
     "repeat_rate": 1.0,
     "chords_total": 25,
-    "chords_full": 2,
-    "chord_recovery": 0.08,
-    "extra_in_chord_mean": 2.48,
-    "melody_precision": 0.8151,
-    "melody_recall": 0.97,
-    "melody_f1": 0.8858
+    "chords_full": 7,
+    "chord_recovery": 0.28,
+    "extra_in_chord_mean": 2.16,
+    "melody_precision": 0.9901,
+    "melody_recall": 1.0,
+    "melody_f1": 0.995
    },
    "timing": {
-    "total_sec": 1.08,
+    "total_sec": 1.09,
     "audio_sec": 55.2
    },
    "processing": {
@@ -882,7 +882,7 @@
      "bass_hi": 55,
      "density": "standard",
      "min_melody_sec": 0.12,
-     "min_bass_sec": 0.25,
+     "min_bass_sec": 0.18,
      "harmonics": 4
     },
     "processing_version": "slice-0.2.0",
@@ -891,9 +891,121 @@
     "windows": 3
    },
    "midi_roundtrip": {
-    "matches": 445,
-    "ref": 445,
-    "est": 445,
+    "matches": 206,
+    "ref": 206,
+    "est": 206,
+    "match_rate": 1.0,
+    "onset_recall": 1.0
+   }
+  },
+  {
+   "fixture": "synth_dense",
+   "mode": "arrangement",
+   "density": "standard",
+   "wall_sec": 0.62,
+   "audio_sec": 24.474965986394558,
+   "raw": {
+    "tol_sec": 0.05,
+    "n_ref": 216,
+    "n_est": 436,
+    "n_hit": 157,
+    "precision": 0.3601,
+    "recall": 0.7269,
+    "f1": 0.4816,
+    "onset_err_sec": {
+     "mean": 0.0223,
+     "median": 0.022,
+     "p95": 0.0405,
+     "n": 157
+    },
+    "release_err_sec": {
+     "mean": 0.0387,
+     "median": 0.0104,
+     "p95": 0.1829,
+     "n": 157
+    },
+    "duration_acc": 0.8917,
+    "extra": 279,
+    "missing": 59,
+    "extra_per_sec": 11.3994,
+    "harmonic_extra": 230,
+    "nonharmonic_extra": 49,
+    "nonharmonic_extra_per_sec": 2.002,
+    "repeat_total": 25,
+    "repeat_preserved": 1,
+    "repeat_rate": 0.04,
+    "chords_total": 8,
+    "chords_full": 0,
+    "chord_recovery": 0.0,
+    "extra_in_chord_mean": 2.875,
+    "melody_precision": 0.8021,
+    "melody_recall": 0.8021,
+    "melody_f1": 0.8021
+   },
+   "final": {
+    "tol_sec": 0.05,
+    "n_ref": 216,
+    "n_est": 207,
+    "n_hit": 169,
+    "precision": 0.8164,
+    "recall": 0.7824,
+    "f1": 0.7991,
+    "onset_err_sec": {
+     "mean": 0.0239,
+     "median": 0.0249,
+     "p95": 0.0382,
+     "n": 169
+    },
+    "release_err_sec": {
+     "mean": 0.0909,
+     "median": 0.0112,
+     "p95": 0.5127,
+     "n": 169
+    },
+    "duration_acc": 0.9231,
+    "extra": 38,
+    "missing": 47,
+    "extra_per_sec": 1.5526,
+    "harmonic_extra": 34,
+    "nonharmonic_extra": 4,
+    "nonharmonic_extra_per_sec": 0.1634,
+    "repeat_total": 25,
+    "repeat_preserved": 9,
+    "repeat_rate": 0.36,
+    "chords_total": 8,
+    "chords_full": 2,
+    "chord_recovery": 0.25,
+    "extra_in_chord_mean": 2.375,
+    "melody_precision": 0.8387,
+    "melody_recall": 0.8125,
+    "melody_f1": 0.8254
+   },
+   "timing": {
+    "total_sec": 0.62,
+    "audio_sec": 24.47
+   },
+   "processing": {
+    "model": "baseline-arranger",
+    "model_version": "0.1.0",
+    "config": {
+     "melody_lo": 55,
+     "melody_hi": 96,
+     "bass_lo": 28,
+     "bass_hi": 55,
+     "density": "standard",
+     "min_melody_sec": 0.12,
+     "min_bass_sec": 0.18,
+     "harmonics": 4
+    },
+    "processing_version": "slice-0.2.0",
+    "mode": "arrangement",
+    "density": "standard",
+    "windows": 1
+   },
+   "midi_roundtrip": {
+    "matches": 207,
+    "ref": 207,
+    "est": 207,
     "match_rate": 1.0,
     "onset_recall": 1.0
    }

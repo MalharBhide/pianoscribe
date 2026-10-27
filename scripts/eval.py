@@ -101,7 +101,8 @@ def main():
     args = ap.parse_args()
     plan = ([(f, "piano", "standard") for f in FIXTURES]
             + [("synth_chords", "arrangement", d) for d in ("simple", "standard", "detailed")]
-            + [("synth_minute", "arrangement", "standard")])
+            + [("synth_minute", "arrangement", "standard"),
+               ("synth_dense", "arrangement", "standard")])
     results, failures = [], []
     for name, mode, density in plan:
         print(f"eval {name} mode={mode} density={density} ...", flush=True)

@@ -53,11 +53,14 @@ def render(notes, path):
         w.writeframes(struct.pack("<%dh" % len(buf), *[int(v * 32767) for v in buf]))
 
 
-def save(name, notes, roles):
+def save(name, notes, roles, render_notes=None):
     os.makedirs(FIX, exist_ok=True)
     notes = [dict(n, role=roles.get(i, "unknown"), hand="R" if n["pitch"] >= 60 else "L")
              for i, n in enumerate(notes)]
-    render(notes, os.path.join(FIX, name + ".wav"))
+    # render_notes allows audio-only distractors (bits of the mix the GT
+    # arrangement target deliberately excludes).
+    render(render_notes if render_notes is not None else notes,
+           os.path.join(FIX, name + ".wav"))
     gt = [{"pitch": n["pitch"], "start_sec": n["start"], "end_sec": n["end"],
            "velocity": n.get("velocity", 90), "role": n["role"], "hand": n["hand"]}
           for n in notes]
@@ -112,6 +115,42 @@ def main():
                          "end": round(t + b * 0.5 + 0.4, 3), "velocity": 92})
         t += 2.2
     save("synth_minute", long, roles)
+    # 5. dense mix: whole-note triad pads + walking 8th bass + 8th melody
+    # + (audio only) quiet 16th arpeggio sparkle above the melody.
+    # GT is the arrangement TARGET (melody/bass/chord); the arrangement must
+    # recover it while ignoring the sparkle. Guards the salad regression.
+    dense, texture = [], []
+    droles = {}
+    _cfg = [
+        ([48, 52, 55], [72, 74, 76, 79, 76, 74, 72, 74, 72, 72, 74, 76]),
+        ([45, 48, 52], [76, 79, 81, 79, 76, 74, 76, 74, 72, 74, 76, 76]),
+        ([41, 45, 48], [77, 81, 77, 76, 74, 76, 77, 76, 74, 72, 74, 76]),
+        ([43, 47, 50], [74, 79, 81, 83, 81, 79, 76, 74, 76, 74, 72, 74]),
+    ]
+    t = 0.2
+    for _loop in range(2):
+        for ch, mel in _cfg:
+            r = ch[0]
+            for k, p in enumerate(ch):
+                droles[len(dense)] = "chord"  # the walking line is the bass
+                # Comping stab (not a 3s sustain): walking over a sustained
+                # same-pitch pad is near-invisible even to a careful listener.
+                dense.append({"pitch": p, "start": round(t, 3), "end": round(t + 1.0, 3),
+                              "velocity": 80})
+            for b in range(12):
+                droles[len(dense)] = "melody"
+                dense.append({"pitch": mel[b], "start": round(t + b * 0.25, 3),
+                              "end": round(t + b * 0.25 + 0.2, 3), "velocity": 100})
+                wb = [r, r + 7, ch[1], r + 7][b % 4]  # root/5th/3rd walk, in bass band
+                droles[len(dense)] = "bass"
+                dense.append({"pitch": wb, "start": round(t + b * 0.25, 3),
+                              "end": round(t + b * 0.25 + 0.22, 3), "velocity": 90})
+            for s in range(24):
+                ap = ch[s % 3] + 24 + (12 if s % 6 >= 3 else 0)
+                texture.append({"pitch": ap, "start": round(t + s * 0.125, 3),
+                                "end": round(t + s * 0.125 + 0.1, 3), "velocity": 55})
+            t += 3.0
+    save("synth_dense", dense, droles, render_notes=dense + texture)
 
 
 if __name__ == "__main__":
