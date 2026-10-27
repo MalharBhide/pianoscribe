@@ -8,7 +8,9 @@ import pytest
 
 from piano_scribe.audio_ingest import (AudioError, Window, iter_windows,
                                        load_audio, merge_window_notes)
-from piano_scribe.pipeline import build_score
+from piano_scribe.audio_models import (REGISTRY, Transcriber,
+                                       TranscriptionResult)
+from piano_scribe.pipeline import build_score, transcribe_signal
 
 
 def write_wav(path, samples, sr=22050, nch=1):
@@ -121,6 +123,30 @@ def test_mp3_named_garbage_is_audio_error(tmp_path):
     bad.write_bytes(b"ID3" + b"\x00" * 500 + b"not really audio" * 40)
     with pytest.raises(AudioError):
         load_audio(str(bad))
+
+
+def test_windowed_bpm_comes_from_beat_grid(monkeypatch):
+    import numpy as np
+
+    class BeatFake(Transcriber):
+        name = "beat-fake"
+
+        def transcribe(self, mono, sr, progress=None, config=None):
+            beats = [round(t * 0.4, 3) for t in range(int(len(mono) / sr / 0.4))]
+            return TranscriptionResult(notes=[], beats=beats, bpm=77.7,
+                                       meta={"model": "beat-fake"})
+
+    monkeypatch.setitem(REGISTRY, "beat-fake", BeatFake())
+    try:
+        out = transcribe_signal(np.zeros(5 * 22050, dtype=np.float32), 22050,
+                                "piano", "standard", window_sec=2.0,
+                                overlap_sec=0.5,
+                                transcriber_override={"piano": "beat-fake"})
+    finally:
+        monkeypatch.delitem(REGISTRY, "beat-fake")
+    assert out["windows"] == 3
+    # 0.4s grid -> 150bpm; neither the 77.7 decoy nor the old fake 120.
+    assert out["bpm"] == pytest.approx(150.0)
 
 
 def test_windows_cover_without_drift():

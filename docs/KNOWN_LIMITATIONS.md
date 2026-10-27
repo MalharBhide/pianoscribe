@@ -27,7 +27,10 @@ Full per-recording numbers: `reports/eval_baseline.json`.
    pads instead). Neither mode is production-ready.
 2. **DSP detectors, not neural AMT.** Typical errors: soft octave doublings
    removed as ghosts, low minor-2nd clusters suppressed, fast passagework
-   merged, pedal/sustain approximated by release hysteresis.
+   merged, pedal/sustain approximated by release hysteresis. On commercial
+   multi-voice mixes the monophonic lead tracker chops between competing
+   voices (lead/ad-libs/harmony); timbre-blind heuristics cannot separate
+   them (far-hop veto ablated: broke minute 0.995 -> 0.960, reverted).
 3. **Beats are estimated**, then measures laid in 4/4. Odd meters, rubato,
    and sharp tempo changes will mis-bar (audible timing stays correct —
    notation only).

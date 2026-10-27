@@ -490,6 +490,9 @@ def estimate_chords(sal: np.ndarray, mids: np.ndarray, times: np.ndarray,
             for cname in CHORD_TEMPLATES:
                 scored.append((tscore(vec, root, cname), root, cname))
         scored.sort(reverse=True)
+        # Complexity margin for extensions was ablated (2026-10): no-op on
+        # all fixtures and two commercial tracks (7ths present are strongly
+        # evidenced); re-add only if weak-7th bias is ever measured.
         best = (scored[0][2], scored[0][1], scored[0][0])
         if bass:
             # The harmony's bass is the LONGEST-sounding bass pitch in the
@@ -724,9 +727,12 @@ class BaselineArranger(Transcriber):
                         for d in cands)]
                     cands = keep or cands
                 if cands:
-                    # Established voices (long active run) and same-phrase
-                    # returns (short gap) compete by continuity; fresh
-                    # voices after a real silence acquire by the extreme.
+                    # A far-hop veto here was ablated (2026-10): it broke
+                    # minute melody (0.995 -> 0.960) without helping real
+                    # songs, so competing-voice theft stands as a known DSP
+                    # ceiling. Established voices (long active run) and
+                    # same-phrase returns (short gap) compete by continuity;
+                    # fresh voices after a real silence acquire by the extreme.
                     if float(sub[f, cur]) >= floor and (
                             active_run >= phrase_frames or last_gap < phrase_frames):
                         # Tracking: the voice continues NEAR itself (auditory

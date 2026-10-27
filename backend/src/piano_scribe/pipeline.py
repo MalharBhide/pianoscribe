@@ -75,8 +75,16 @@ def transcribe_signal(mono: np.ndarray, sr: int, mode: str, density: str,
     for b in all_beats:
         if not dedup or b - dedup[-1] > 0.15:
             dedup.append(b)
-    return {"notes": notes, "beats": dedup, "bpm": meta.get("config", {}).get("bpm", 120.0)
-            if isinstance(meta.get("config"), dict) else 120.0,
+    # bpm comes from the merged grid itself (median IOI): the config never
+    # carries a bpm, so the old lookup printed a fake 120 on every
+    # multi-window file. Only beatless audio falls back to 120.
+    grid_bpm = 120.0
+    if len(dedup) >= 3:
+        import statistics
+        step = statistics.median(dedup[i + 1] - dedup[i] for i in range(len(dedup) - 1))
+        if step > 1e-6:
+            grid_bpm = float(min(240.0, max(30.0, 60.0 / step)))
+    return {"notes": notes, "beats": dedup, "bpm": grid_bpm,
             "chords": all_chords, "meta": meta, "windows": len(wins)}
 
 
