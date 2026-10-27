@@ -418,7 +418,7 @@ function wireScore() {
       if (e.shiftKey) { S.selection.has(id) ? S.selection.delete(id) : S.selection.add(id); }
       else { S.selection = new Set([id]); }
       seek(parseFloat(el.getAttribute("data-time") || "0"));
-      updateSelUI();
+      updateSelUI(); audition(id);
     });
   });
   wrap.querySelectorAll(".measure-hit").forEach((el) => {
@@ -551,7 +551,7 @@ function renderRoll() {
       if (S.rollDragged) { S.rollDragged = false; return; }
       if (e.shiftKey) { S.selection.has(n.id) ? S.selection.delete(n.id) : S.selection.add(n.id); }
       else { S.selection = new Set([n.id]); }
-      seek(n.start_sec); updateSelUI(); renderRoll();
+      seek(n.start_sec); updateSelUI(); audition(n.id); renderRoll();
     });
     r.addEventListener("pointerdown", (e) => startRollDrag(e, n, svg, g));
     svg.append(r);
@@ -682,6 +682,18 @@ function schedulePianoMore() {
 function stopVoices() { if (S.actx) { S.actx.close().catch(() => {}); S.actx = null; } }
 function setPlayIcon() {
   $("play").innerHTML = `<svg class="ic"><use href="#i-${S.playing ? "pause" : "play"}"/></svg>`;
+}
+function audition(id) {
+  // Preview one note immediately (clicking through the score), even stopped.
+  if (!S.score || S.playing) return;
+  const n = S.score.notes.find((x) => x.id === id);
+  if (!n) return;
+  try {
+    const ctx = ensureCtx(); applyGains();
+    const dest = n.hand === "L" ? S.gainL : S.gainR;
+    pianoTone(ctx, dest, n.pitch, ctx.currentTime + 0.03,
+      Math.min(Math.max(n.end_sec - n.start_sec, 0.15), 1.2), n.velocity);
+  } catch (e) {}
 }
 function play() {
   if (!S.score) return;

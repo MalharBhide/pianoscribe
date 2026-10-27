@@ -24,7 +24,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from . import PROCESSING_VERSION
 from .assistant import apply_action, parse_command
 from .config import get_limits, get_settings
-from .notation import render_svg, to_midi_bytes, to_musicxml, to_pdf_bytes
+from .notation import quantize, render_svg, to_midi_bytes, to_musicxml, to_pdf_bytes
 from .score import Score
 from .store import (artifact_dir, audio_dir, audio_referenced_elsewhere,
                     create_job, delete_project, get_job, get_project,
@@ -521,6 +521,9 @@ def api_assist_apply(pid: str, body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _persist(pid: str, p: Dict[str, Any], score: Score) -> None:
+    # Re-quantize on every save so notation (beats) tracks edited timing;
+    # deterministic + idempotent, performance seconds untouched.
+    quantize(score)
     save_project(pid, p["title"], p["mode"], p["audio_path"], score.to_dict())
     ad = artifact_dir(pid)
     with open(os.path.join(ad, "score.json"), "w") as f:

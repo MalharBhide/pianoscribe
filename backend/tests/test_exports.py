@@ -81,3 +81,70 @@ def test_pdf_magic_and_title():
     data = to_pdf_bytes(make_score())
     assert data[:4] == b"%PDF"
     assert len(data) > 1000
+
+
+def test_display_value_mapping():
+    from piano_scribe.notation import display_value
+    assert display_value(4.0) == ("whole", 0, 0)
+    assert display_value(2.0) == ("half", 0, 0)
+    assert display_value(1.5) == ("quarter", 1, 0)
+    assert display_value(1.0) == ("quarter", 0, 0)
+    assert display_value(0.5) == ("eighth", 0, 1)
+    assert display_value(0.25) == ("16th", 0, 2)
+    assert display_value(1 / 3) == ("eighth", 0, 1)
+    assert display_value(0.9) == ("quarter", 0, 0)
+
+
+def test_notation_beats_fallback():
+    from piano_scribe.notation import notation_beats
+    n = Note(id="x", pitch=60, start_sec=0.0, end_sec=1.0, hand="R")
+    assert n.beat_onset is None and n.beat_dur is None
+    on, du = notation_beats(n, TempoMap(beats=[], bpm=120.0, beats_per_bar=4))
+    assert on == 0.0 and abs(du - 2.0) < 1e-9
+
+
+def _quantized_score():
+    from piano_scribe.notation import quantize
+    s = Score(title="Rhythm", mode="piano")
+    s.tempo = TempoMap(beats=[], bpm=120.0, beats_per_bar=4)  # beat = 0.5s, bar = 2s
+    s.notes = [
+        Note(id="w", pitch=72, start_sec=0.0, end_sec=2.0, hand="R"),   # whole
+        Note(id="e", pitch=76, start_sec=2.0, end_sec=2.25, hand="R"),  # eighth
+        Note(id="c1", pitch=60, start_sec=2.5, end_sec=3.0, hand="R"),  # 2nds
+        Note(id="c2", pitch=62, start_sec=2.5, end_sec=3.0, hand="R"),
+        Note(id="tie", pitch=48, start_sec=1.0, end_sec=3.0, hand="L"),  # spans barline
+    ]
+    return quantize(s)
+
+
+def test_svg_rhythmic_marks_and_no_tofu():
+    svg = render_svg(_quantized_score())
+    assert 'fill="#fff"' in svg  # hollow whole head
+    assert "<path" in svg  # flags / ties / vector clefs
+    assert "tsig" in svg  # time signature
+    for tofu in ("𝄞", "𝄢", "♯", "𝄾"):
+        assert tofu not in svg  # glyphs are vector paths, never font glyphs
+
+
+def test_svg_chord_seconds_offset():
+    import re
+    svg = render_svg(_quantized_score())
+    xs = {}
+    for m in re.finditer(r'<ellipse class="notehead" data-note="(c1|c2)"[^>]*cx="([\d.]+)"', svg):
+        xs[m.group(1)] = float(m.group(2))
+    assert set(xs) == {"c1", "c2"} and abs(xs["c1"] - xs["c2"]) > 5
+
+
+def test_svg_ties_across_barline():
+    svg = render_svg(_quantized_score())
+    assert svg.count('data-note="tie"') == 2  # head in each spanned measure
+    assert " Q " in svg  # tie arc (quadratic curve)
+
+
+def test_musicxml_types_and_tied():
+    xml = to_musicxml(_quantized_score())
+    root = ET.fromstring(xml)
+    notes = root.findall(".//note")
+    assert notes and all(n.findtext("type") for n in notes)
+    tied = [t.get("type") for t in root.findall(".//tied")]
+    assert "start" in tied and "stop" in tied  # spanning note renders its tie

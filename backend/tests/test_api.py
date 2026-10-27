@@ -65,6 +65,21 @@ def test_edit_export_version_coherence():
         assert e.headers["X-Score-Version"] == str(v0 + 1)
 
 
+def test_edit_requantizes_notation():
+    from piano_scribe.score import TempoMap
+    s = Score(title="Q")
+    s.tempo = TempoMap(beats=[], bpm=120.0, beats_per_bar=4)  # beat = 0.5s
+    s.notes = [Note(id="q", pitch=60, start_sec=0.0, end_sec=0.5, hand="R")]
+    save_project("prj_q", "Q", "piano", "/tmp/none.wav", s.to_dict())
+    before = client.get("/api/projects/prj_q").json()["score"]["notes"][0]["beat_dur"]
+    assert before is None  # hand-built score was never quantized
+    r = client.patch("/api/projects/prj_q/notes",
+                     json={"op": "update", "id": "q", "patch": {"end_sec": 1.5}})
+    assert r.status_code == 200
+    after = r.json()["score"]["notes"][0]["beat_dur"]
+    assert after == 3.0  # notation re-derived from the edited 1.5s duration
+
+
 def test_sniff_kinds():
     from piano_scribe.api import sniff_audio_kind
     assert sniff_audio_kind(b"RIFF....WAVE" + b"\x00" * 100) == "wav"
