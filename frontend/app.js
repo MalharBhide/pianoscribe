@@ -15,7 +15,7 @@ const S = {
   view: "home", cfg: null, projects: [],
   pid: null, proj: null, score: null,
   selection: new Set(), tab: "score", zoom: 100, follow: true,
-  showChords: true, showFing: true, handFilter: "both",
+  showChords: true, showFing: true, showProv: false, handFilter: "both",
   loop: null, playing: false, source: "piano", speed: 1, t: 0, raf: 0,
   actx: null, master: null, gainL: null, gainR: null, playStartCtx: 0, playStartT: 0,
   schedUntil: 0,
@@ -459,9 +459,11 @@ function applyDisplayToggles() {
   if (svg) {
     svg.classList.toggle("hide-chords", !S.showChords);
     svg.classList.toggle("hide-fing", !S.showFing);
+    svg.classList.toggle("show-prov", !!S.showProv);
   }
   $("chordsBtn").setAttribute("aria-pressed", S.showChords);
   $("fingerBtn").setAttribute("aria-pressed", S.showFing);
+  $("provBtn").setAttribute("aria-pressed", !!S.showProv);
   renderRoll();
 }
 function applyHandFilter() {
@@ -1034,6 +1036,7 @@ function init() {
   $("followBtn").onclick = () => { S.follow = !S.follow; $("followBtn").setAttribute("aria-pressed", S.follow); };
   $("chordsBtn").onclick = () => { S.showChords = !S.showChords; applyDisplayToggles(); };
   $("fingerBtn").onclick = () => { S.showFing = !S.showFing; applyDisplayToggles(); };
+  $("provBtn").onclick = () => { S.showProv = !S.showProv; applyDisplayToggles(); };
   const ZOOMS = [50, 75, 100, 125, 150, 200];
   const setZoom = (z) => { S.zoom = z; $("zoomPct").textContent = z + "%";
     const svg = $("scoreWrap").querySelector("svg"); if (svg) svg.style.width = z + "%"; };

@@ -106,26 +106,63 @@ def assign_hands_piano(score: Score, split_pitch: int = 60) -> Score:
 
 
 # -- pitch spelling --------------------------------------------------------------
-def spell(pitch: int) -> Tuple[str, int, int]:
-    """Return (step, alter, octave) with sharp preference, no key signature."""
+def spell(pitch: int, key_fifths: int = 0) -> Tuple[str, int, int]:
+    """Return (step, alter, octave). Sharp preference, except flat keys
+    (fifths<0) spell chromatics as flats of the diatonic above."""
     octave = pitch // 12 - 1
     pc = pitch % 12
     if pc in DIA:
         return "CDEFGAB"[DIA[pc]], 0, octave
+    if key_fifths < 0 and (pc + 1) % 12 in DIA:
+        return "CDEFGAB"[DIA[(pc + 1) % 12]], -1, octave
     # sharp of the diatonic below
     below = max(p for p in DIA if p < pc)
     return "CDEFGAB"[DIA[below]], 1, octave
 
 
-def staff_steps(pitch: int, clef: str) -> Tuple[int, int]:
+def staff_steps(pitch: int, clef: str, key_fifths: int = 0) -> Tuple[int, int]:
     """Diatonic steps above the staff bottom line + accidental alter."""
-    step, alter, octave = spell(pitch)
+    step, alter, octave = spell(pitch, key_fifths)
     dia_idx = "CDEFGAB".index(step) + octave * 7
     if clef == "treble":
         base = "CDEFGAB".index("E") + 4 * 7  # E4 bottom line
     else:
         base = "CDEFGAB".index("G") + 2 * 7  # G2 bottom line
     return dia_idx - base, alter
+
+
+MAJ_TONIC = {0: 0, 1: 7, 2: 2, 3: 9, 4: 4, 5: 11, 6: 6, 7: 1,
+             -1: 5, -2: 10, -3: 3, -4: 8, -5: 1, -6: 6, -7: 11}
+
+
+def detect_key(notes: List[Note]) -> int:
+    """Key signature in fifths (-7..7) minimizing duration-weighted
+    out-of-scale pitch classes. Ties prefer C, then fewer accidentals,
+    then the sharp side. (Relative minors share the signature.)"""
+    if not notes:
+        return 0
+    weights: Dict[int, float] = {}
+    for n in notes:
+        weights[n.pitch % 12] = weights.get(n.pitch % 12, 0.0) + max(0.1, n.end_sec - n.start_sec)
+    cands = [0]
+    for k in range(1, 8):
+        cands += [k, -k]
+    best, best_cost = 0, None
+    for f in cands:
+        scale = {(MAJ_TONIC[f] + iv) % 12 for iv in (0, 2, 4, 5, 7, 9, 11)}
+        cost = sum(w for pc, w in weights.items() if pc not in scale)
+        if best_cost is None or cost < best_cost - 1e-9:
+            best, best_cost = f, cost
+    return best
+
+
+# Key-signature accidental staff positions (steps above bottom line) in
+# signature order. Treble is the standard layout; bass is derived (-2,
+# folded up an octave) and verified visually.
+KEY_LINES = {
+    "treble": {"#": [8, 5, 9, 6, 3, 7, 4], "b": [4, 7, 3, 6, 2, 5, 8]},
+    "bass": {"#": [6, 3, 7, 4, 1, 5, 2], "b": [2, 5, 1, 4, 0, 3, 6]},
+}
 
 
 # -- chord symbols ---------------------------------------------------------------
@@ -194,21 +231,23 @@ def to_musicxml(score: Score) -> str:
               % escape(score.title))
     out.write('<part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>\n')
     out.write('<part id="P1">\n')
+    key = max(-7, min(7, int(getattr(score, "key_fifths", 0) or 0)))
     for m, (ms, me) in enumerate(bounds):
         out.write(f'<measure number="{m + 1}">\n')
         if m == 0:
             out.write('<attributes><divisions>%d</divisions>'
+                      '<key><fifths>%d</fifths></key>'
                       '<staves>2</staves>'
                       '<clef number="1"><sign>G</sign><line>2</line></clef>'
                       '<clef number="2"><sign>F</sign><line>4</line></clef>'
                       '<time><beats>%d</beats><beat-type>4</beat-type></time></attributes>\n'
-                      % (DIVISIONS, bpb))
+                      % (DIVISIONS, key, bpb))
         hams = [c for c in score.chords
                 if c.get("label") != "unknown" and ms - 1e-6 <= float(c.get("start_sec", -1)) < me - 1e-6]
         for staff_no, hand in ((1, "R"), (2, "L")):
             segs = _measure_segments(score, hand, m, ms, me)
             _write_voice(out, segs, staff_no, ms, me,
-                         harmonies=hams if staff_no == 1 else None)
+                         harmonies=hams if staff_no == 1 else None, key=key)
         out.write('</measure>\n')
     out.write('</part></score-partwise>\n')
     return out.getvalue()
@@ -235,7 +274,7 @@ def _measure_segments(score: Score, hand: str, m: int, ms: float, me: float):
 
 
 def _write_voice(out: io.StringIO, segs: List[Dict[str, Any]], staff_no: int, ms: float, me: float,
-                 harmonies: Any = None):
+                 harmonies: Any = None, key: int = 0):
     order = sorted(segs, key=lambda s: (s["start"], s["note"].pitch))
     # rest-fill cursor in divisions
     def div_at(t: float) -> int:
@@ -269,7 +308,7 @@ def _write_voice(out: io.StringIO, segs: List[Dict[str, Any]], staff_no: int, ms
         maxdv = 0
         for k, s in enumerate(grp):
             n: Note = s["note"]
-            step, alter, octave = spell(n.pitch)
+            step, alter, octave = spell(n.pitch, key)
             out.write('<note>')
             if k > 0:
                 out.write('<chord/>')
@@ -424,12 +463,6 @@ def notation_beats(n: Note, tempo: TempoMap) -> Tuple[float, float]:
     return on, max(0.05, seconds_to_beats(n.end_sec, tempo) - on)
 
 
-def _pitch_y(pitch: int, clef: str, top_y: float) -> float:
-    steps, _ = staff_steps(pitch, clef)
-    bottom_y = top_y + 4 * SPACE  # 5 lines
-    return bottom_y - steps * (SPACE / 2.0)
-
-
 # -- vector glyphs ---------------------------------------------------------------
 # A glyph is a list of subpaths; a subpath is a list of ops:
 # ("M",x,y) ("L",x,y) ("C",x1,y1,x2,y2,x,y) ("Q",x1,y1,x,y) ("Z",).
@@ -490,6 +523,14 @@ def glyph_natural(x: float, y: float) -> List[List[tuple]]:
     ]
 
 
+def glyph_flat(x: float, y: float) -> List[List[tuple]]:
+    return [
+        [("M", x + 3, y - 11), ("L", x + 3, y + 2),
+         ("C", x + 3, y + 7, x + 9, y + 7, x + 9, y + 1.5),
+         ("C", x + 9, y - 2, x + 5, y - 1.5, x + 3, y + 1)],
+    ]
+
+
 def glyph_quarter_rest(cx: float, top: float) -> List[List[tuple]]:
     mid = top + 2 * SPACE
     return [[("M", cx - 1.5, mid - 12), ("L", cx + 2.5, mid - 5), ("L", cx - 2.5, mid + 1),
@@ -547,9 +588,77 @@ def _rest_parts(gap_beats: float) -> List[str]:
     return parts
 
 
+def _beam_records(records: List[Dict[str, Any]], beams: List[Dict[str, Any]]) -> None:
+    """Beam consecutive flagged same-beat clusters. The group takes one stem
+    direction (by mean staff position); minority clusters flip to match.
+    Extends stems to the shared beam line, clears individual flags."""
+    def beamable(r: Dict[str, Any]) -> bool:
+        return r["stem"] is not None and r["stem"]["flags"] >= 1 and not r["tied"]
+
+    def beat_idx(r: Dict[str, Any]) -> int:
+        return math.floor(round(r["beat"], 3) + 1e-6)
+
+    i = 0
+    while i < len(records):
+        if not beamable(records[i]):
+            i += 1
+            continue
+        run = [records[i]]
+        j = i + 1
+        while j < len(records) and beamable(records[j]) and beat_idx(records[j]) == beat_idx(run[-1]):
+            run.append(records[j])
+            j += 1
+        if len(run) >= 2:
+            all_steps = [d["steps"] for r in run for d in r["infos"]]
+            down = sum(all_steps) / len(all_steps) >= 4
+            for r in run:
+                ys = [d["y"] for d in r["infos"]]
+                if down:
+                    r["stem"] = {"x": r["cx"] - 5.4, "y1": min(ys), "y2": max(ys) + STEM_LEN,
+                                 "flags": r["stem"]["flags"]}
+                else:
+                    r["stem"] = {"x": r["cx"] + 5.4, "y1": max(ys), "y2": min(ys) - STEM_LEN,
+                                 "flags": r["stem"]["flags"]}
+                if r["stem_down"] != down:
+                    r["stem_down"] = down
+                    r["offs"] = [-o for o in r["offs"]]
+            down = run[0]["stem_down"]
+            beam_y = max(r["stem"]["y2"] for r in run) if down else min(r["stem"]["y2"] for r in run)
+            for r in run:
+                r["stem"]["y2"] = beam_y
+            spans = [{"x1": run[0]["stem"]["x"], "x2": run[-1]["stem"]["x"], "level": 1}]
+            maxf = max(r["stem"]["flags"] for r in run)
+            for level in range(2, maxf + 1):
+                idxs = [n for n, r in enumerate(run) if r["stem"]["flags"] >= level]
+                k = 0
+                while k < len(idxs):
+                    m = k
+                    while m + 1 < len(idxs) and idxs[m + 1] == idxs[m] + 1:
+                        m += 1
+                    if m > k:
+                        spans.append({"x1": run[idxs[k]]["stem"]["x"],
+                                      "x2": run[idxs[m]]["stem"]["x"], "level": level})
+                    else:
+                        n = idxs[k]
+                        sx = run[n]["stem"]["x"]
+                        if n == 0:
+                            hx1, hx2 = sx, sx + 12
+                        elif n == len(run) - 1:
+                            hx1, hx2 = sx - 12, sx
+                        else:
+                            hx1, hx2 = (sx - 12, sx) if n > len(run) / 2 else (sx, sx + 12)
+                        spans.append({"x1": hx1, "x2": hx2, "level": level})
+                    k = m + 1
+            for r in run:
+                r["stem"]["flags"] = 0
+            beams.append({"down": down, "y": beam_y, "spans": spans})
+        i = j
+
+
 def _layout_staff(score: Score, hand: str, clef: str, top: float,
                   ms: float, me: float, x0: float, mw: float,
-                  prev_heads: Dict[str, Dict[str, Any]], gidx: int) -> Dict[str, Any]:
+                  prev_heads: Dict[str, Dict[str, Any]], gidx: int,
+                  key: int = 0) -> Dict[str, Any]:
     mnotes = [n for n in score.notes
               if n.hand == hand and n.end_sec > ms and n.start_sec < me]
     mnotes.sort(key=lambda n: (max(n.start_sec, ms), n.pitch))
@@ -562,18 +671,27 @@ def _layout_staff(score: Score, hand: str, clef: str, top: float,
             clusters.append([t, [n]])
     heads: List[Dict[str, Any]] = []
     ties: List[Dict[str, Any]] = []
-    acc_state: Dict[int, int] = {}
+    beams: List[Dict[str, Any]] = []
+    if key:
+        sign = "#" if key > 0 else "b"
+        kval = 1 if key > 0 else -1
+        acc_state: Dict[int, int] = {ln: kval for ln in KEY_LINES[clef][sign][:abs(key)]}
+    else:
+        acc_state = {}
     placed_acc: List[Tuple[float, float]] = []
+    # Pass 1: cluster records (heads + stems); pass 2 beams them (mutating
+    # stem tips), pass 3 emits heads/ties.
+    records = []
     for t, grp in clusters:
         frac = (t - ms) / max(1e-6, me - ms)
         cx = x0 + 12 + frac * (mw - 24)
         infos = []
         for n in grp:
-            steps, alter = staff_steps(n.pitch, clef)
-            _, dur_b = notation_beats(n, score.tempo)
+            steps, alter = staff_steps(n.pitch, clef, key)
+            bon, dur_b = notation_beats(n, score.tempo)
             name, dots, flags = display_value(dur_b)
             infos.append({"n": n, "steps": steps, "alter": alter, "dur_name": name,
-                          "dots": dots, "flags": flags,
+                          "dots": dots, "flags": flags, "beat": bon,
                           "y": top + 4 * SPACE - steps * (SPACE / 2.0)})
         infos.sort(key=lambda d: -d["steps"])
         mean_steps = sum(d["steps"] for d in infos) / len(infos)
@@ -593,16 +711,28 @@ def _layout_staff(score: Score, hand: str, clef: str, top: float,
         else:
             stem = {"x": cx + 5.4, "y1": max(ys), "y2": min(ys) - STEM_LEN,
                     "flags": max(d["flags"] for d in infos)}
+        tied = any(n.start_sec < ms - 1e-6 for n in grp)
+        records.append({"t": t, "cx": cx, "infos": infos, "offs": offs, "stem": stem,
+                        "stem_down": stem_down, "tied": tied,
+                        "beat": min(d["beat"] for d in infos)})
+    _beam_records(records, beams)
+    for rec in records:
+        cx, infos, offs = rec["cx"], rec["infos"], rec["offs"]
+        stem, stem_down = rec["stem"], rec["stem_down"]
         min_hx = cx + min(offs)
         for d, off in zip(infos, offs):
             n = d["n"]
             hx = cx + off
             # accidental with per-measure state + natural cancellation
             acc = None
-            if d["alter"] == 1 and acc_state.get(d["steps"]) != 1:
+            st = acc_state.get(d["steps"], 0)
+            if d["alter"] == 1 and st != 1:
                 acc = ("sharp", min_hx - 15)
                 acc_state[d["steps"]] = 1
-            elif d["alter"] == 0 and acc_state.get(d["steps"]) == 1:
+            elif d["alter"] == -1 and st != -1:
+                acc = ("flat", min_hx - 15)
+                acc_state[d["steps"]] = -1
+            elif d["alter"] == 0 and st != 0:
                 acc = ("natural", min_hx - 15)
                 acc_state[d["steps"]] = 0
             if acc is not None:
@@ -663,7 +793,8 @@ def _layout_staff(score: Score, hand: str, clef: str, top: float,
                 rests.append({"kind": part, "x": x0 + 12 + frac * (mw - 24),
                               "top": top})
                 b0 += val
-    return {"clef": clef, "top": top, "heads": heads, "rests": rests, "ties": ties}
+    return {"clef": clef, "top": top, "heads": heads, "rests": rests, "ties": ties,
+            "beams": beams}
 
 
 def layout_score(score: Score, max_measures: int = 400) -> Dict[str, Any]:
@@ -671,25 +802,38 @@ def layout_score(score: Score, max_measures: int = 400) -> Dict[str, Any]:
     end_sec = max([n.end_sec for n in score.notes], default=1.0)
     bounds = measure_bounds(score.tempo, end_sec)[:max_measures]
     per_system = 4
+    key = int(getattr(score, "key_fifths", 0) or 0)
+    key = max(-7, min(7, key))
+    n_acc = abs(key)
     systems = []
     prev_heads: Dict[str, Dict[str, Any]] = {}
     nbars = len(bounds) or 1
     for si in range(0, nbars, per_system):
         sys_bounds = bounds[si:si + per_system] or [(0.0, 1.0)]
-        y0 = 54 + (si // per_system) * 150.0
+        sys_idx = si // per_system
+        y0 = 54 + sys_idx * 150.0
         treble_top, bass_top = y0 + 8, y0 + 8 + 5 * SPACE + 26
+        if n_acc:
+            key_end = 54 + (n_acc - 1) * 9 + 14
+            tsig_x = key_end + 9 if sys_idx == 0 else None
+            left = key_end + (18 if sys_idx == 0 else 6)
+        else:
+            tsig_x = 56 if sys_idx == 0 else None
+            left = STAFF_LEFT
+        line_w = SYSTEM_W - left - 20.0
         sys = {"y0": y0, "treble_top": treble_top, "bass_top": bass_top,
+               "left": left, "line_w": line_w, "tsig_x": tsig_x, "key": key,
                "measures": []}
         for mi, (ms, me) in enumerate(sys_bounds):
             gidx = si + mi
-            mw = LINE_W / len(sys_bounds)
-            x0 = STAFF_LEFT + mi * mw
+            mw = line_w / len(sys_bounds)
+            x0 = left + mi * mw
             meas = {"gidx": gidx, "ms": ms, "me": me, "x0": x0, "mw": mw,
                     "staves": {
                         "R": _layout_staff(score, "R", "treble", treble_top, ms, me,
-                                           x0, mw, prev_heads, gidx),
+                                           x0, mw, prev_heads, gidx, key),
                         "L": _layout_staff(score, "L", "bass", bass_top, ms, me,
-                                           x0, mw, prev_heads, gidx)}}
+                                           x0, mw, prev_heads, gidx, key)}}
             for nid in [k for k, v in prev_heads.items()
                         if score.get(k) is not None and score.get(k).end_sec <= ms]:
                 del prev_heads[nid]
@@ -723,7 +867,12 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
             f'viewBox="0 0 {W} {H}" role="img" aria-label="Piano score">\n')
     s.write('<style>.nl{stroke:#333;stroke-width:1}'
             '.bar{stroke:#333;stroke-width:1.2}.mno{font:10px sans-serif;fill:#888}'
-            '.notehead{cursor:pointer}.chord-sym{font:600 12px Georgia,serif;fill:#17407f}'
+            '.notehead{cursor:pointer;fill:#1a1a1a}.notehead[stroke]{fill:#fff;stroke:#1a1a1a}'
+            'svg.show-prov .notehead[data-prov="arranged"]{fill:#2a5db0}'
+            'svg.show-prov .notehead[stroke][data-prov="arranged"]{fill:#fff;stroke:#2a5db0}'
+            'svg.show-prov .notehead[data-prov="user-edited"]{fill:#b05a2a}'
+            'svg.show-prov .notehead[stroke][data-prov="user-edited"]{fill:#fff;stroke:#b05a2a}'
+            '.chord-sym{font:600 12px Georgia,serif;fill:#17407f}'
             '.fing{font:7.5px sans-serif;fill:#5b6470}.tsig{font:700 15px sans-serif;fill:#1a1a1a}'
             'svg.hide-chords .chord-sym{display:none}svg.hide-fing .fing{display:none}</style>\n')
     s.write(f'<text x="{STAFF_LEFT}" y="22" font-family="sans-serif" font-size="16" font-weight="bold">'
@@ -731,21 +880,30 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
     n_sys = len(lay["systems"])
     for si, sys in enumerate(lay["systems"]):
         treble_top, bass_top = sys["treble_top"], sys["bass_top"]
+        left, line_w = sys["left"], sys["line_w"]
         for top in (treble_top, bass_top):
             for ln in range(5):
                 yy = top + ln * SPACE
-                s.write(f'<line class="nl" x1="{STAFF_LEFT}" y1="{yy}" x2="{STAFF_LEFT + LINE_W}" y2="{yy}"/>\n')
+                s.write(f'<line class="nl" x1="{left}" y1="{yy}" x2="{left + line_w}" y2="{yy}"/>\n')
         s.write(svg_paths(glyph_g_clef(38, treble_top), "#1a1a1a", 2.0))
         s.write(svg_paths(glyph_f_clef(38, bass_top), "#1a1a1a", 2.2))
         fy = bass_top + SPACE
         s.write(f'<circle cx="44" cy="{fy - 1:.1f}" r="2" fill="#1a1a1a"/>\n'
                 f'<circle cx="48" cy="{fy - 4.5:.1f}" r="1.7" fill="#1a1a1a"/>\n'
                 f'<circle cx="48" cy="{fy + 4.5:.1f}" r="1.7" fill="#1a1a1a"/>\n')
-        if si == 0:
+        if sys["key"]:
+            sign = "#" if sys["key"] > 0 else "b"
+            for top, clef in ((treble_top, "treble"), (bass_top, "bass")):
+                for i, ln in enumerate(KEY_LINES[clef][sign][:abs(sys["key"])]):
+                    y = top + 4 * SPACE - ln * (SPACE / 2.0)
+                    x = 54 + i * 9
+                    glyph = glyph_sharp(x, y) if sign == "#" else glyph_flat(x, y)
+                    s.write(svg_paths(glyph, "#1a1a1a", 1.4))
+        if sys["tsig_x"] is not None:
             for top in (treble_top, bass_top):
-                s.write(f'<text class="tsig" x="56" y="{top + SPACE + 5:.1f}" text-anchor="middle">{lay["bpb"]}</text>\n'
-                        f'<text class="tsig" x="56" y="{top + 3 * SPACE + 5:.1f}" text-anchor="middle">4</text>\n')
-        s.write(f'<line class="bar" x1="{STAFF_LEFT}" y1="{treble_top}" x2="{STAFF_LEFT}" y2="{bass_top + 4 * SPACE}"/>\n')
+                s.write(f'<text class="tsig" x="{sys["tsig_x"]}" y="{top + SPACE + 5:.1f}" text-anchor="middle">{lay["bpb"]}</text>\n'
+                        f'<text class="tsig" x="{sys["tsig_x"]}" y="{top + 3 * SPACE + 5:.1f}" text-anchor="middle">4</text>\n')
+        s.write(f'<line class="bar" x1="{left}" y1="{treble_top}" x2="{left}" y2="{bass_top + 4 * SPACE}"/>\n')
         for mi, meas in enumerate(sys["measures"]):
             last_overall = si == n_sys - 1 and mi == len(sys["measures"]) - 1
             x0, mw, ms, me = meas["x0"], meas["mw"], meas["ms"], meas["me"]
@@ -776,11 +934,14 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                                 f'x2="{h["x"] + 8.5:.1f}" y2="{ly:.1f}"/>\n')
                     if h["acc"] is not None:
                         kind, ax = h["acc"]
-                        glyph = glyph_sharp(ax, h["y"]) if kind == "sharp" else glyph_natural(ax, h["y"])
+                        glyph = {"sharp": glyph_sharp(ax, h["y"]),
+                                 "flat": glyph_flat(ax, h["y"]),
+                                 "natural": glyph_natural(ax, h["y"])}[kind]
                         s.write(svg_paths(glyph, "#1a1a1a", 1.4))
                     hollow = h["dur_name"] in ("whole", "half")
                     if hollow:
                         s.write(f'<ellipse class="notehead" data-note="{n.id}" data-time="{n.start_sec:.3f}" '
+                                f'data-prov="{n.provenance}" '
                                 f'cx="{h["x"]:.1f}" cy="{h["y"]:.1f}" rx="6.5" ry="4.8" fill="#fff" '
                                 f'stroke="{h["color"]}" stroke-width="1.6" '
                                 f'transform="rotate(-18 {h["x"]:.1f} {h["y"]:.1f})">'
@@ -788,6 +949,7 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                                 f'</ellipse>\n')
                     else:
                         s.write(f'<ellipse class="notehead" data-note="{n.id}" data-time="{n.start_sec:.3f}" '
+                                f'data-prov="{n.provenance}" '
                                 f'cx="{h["x"]:.1f}" cy="{h["y"]:.1f}" rx="6" ry="4.4" fill="{h["color"]}" '
                                 f'transform="rotate(-18 {h["x"]:.1f} {h["y"]:.1f})">'
                                 f'<title>{NAMES[n.pitch % 12]}{n.pitch // 12 - 1} · {n.start_sec:.2f}s · {n.provenance}</title>'
@@ -802,6 +964,12 @@ def render_svg(score: Score, max_measures: int = 400) -> str:
                 for tie in st["ties"]:
                     s.write(svg_paths([glyph_tie(tie["x1"], tie["y"], tie["x2"], tie["below"])],
                                       "#1a1a1a", 1.3))
+                for beam in st["beams"]:
+                    for sp in beam["spans"]:
+                        off = (sp["level"] - 1) * 8
+                        yt = beam["y"] + off - 4.5 if not beam["down"] else beam["y"] - off
+                        s.write(f'<rect x="{sp["x1"]:.1f}" y="{yt:.1f}" '
+                                f'width="{sp["x2"] - sp["x1"]:.1f}" height="4.5" fill="#1a1a1a"/>\n')
     s_chords_open = False
     for cx, cy, sym in _chord_placements(lay, score.chords):
         if not s_chords_open:
@@ -818,7 +986,7 @@ def _chord_placements(lay: Dict[str, Any], chords: List[Dict[str, Any]]):
     """(x, y, symbol) in layout space, thinned so crowded mid-measure
     changes don't overprint each other. Measure-start symbols always stay."""
     out = []
-    last_cx = -100.0
+    last_cx, last_sym = -100.0, ""
     for c in chords:
         sym = chord_symbol(str(c.get("label", "")))
         if not sym:
@@ -834,10 +1002,11 @@ def _chord_placements(lay: Dict[str, Any], chords: List[Dict[str, Any]]):
         meas, treble_top = lay_m
         cx = meas["x0"] + 4 + max(0.0, (t - meas["ms"]) / max(1e-6, meas["me"] - meas["ms"])) * (meas["mw"] - 8)
         if cx < last_cx - 100:
-            last_cx = -100.0
-        if cx - last_cx < 44 and not (t < meas["ms"] + 0.05):
+            last_cx, last_sym = -100.0, ""
+        need = max(40.0, 7.5 * len(last_sym) + 14)
+        if cx - last_cx < need and not (t < meas["ms"] + 0.05):
             continue
-        last_cx = cx
+        last_cx, last_sym = cx, sym
         out.append((cx, treble_top - 16, sym))
     return out
 
@@ -908,24 +1077,33 @@ def to_pdf_bytes(score: Score) -> bytes:
         c.setStrokeColorRGB(0.2, 0.2, 0.2)
         c.setFillColorRGB(0.1, 0.1, 0.1)
         treble_top, bass_top = sys["treble_top"], sys["bass_top"]
+        left, line_w = sys["left"], sys["line_w"]
         c.setLineWidth(0.7)
         for top in (treble_top, bass_top):
             for ln in range(5):
                 yy = Y(top + ln * SPACE)
-                c.line(X(STAFF_LEFT), yy, X(STAFF_LEFT + LINE_W), yy)
+                c.line(X(left), yy, X(left + line_w), yy)
         tr = lambda x, y: (X(x), Y(y))
         _rl_draw_ops(c, glyph_g_clef(38, treble_top), tr, 1.2)
         _rl_draw_ops(c, glyph_f_clef(38, bass_top), tr, 1.3)
         fy = bass_top + SPACE
         for dx, dy, r in ((6, -1, 2.0), (10, -4.5, 1.7), (10, 4.5, 1.7)):
             c.circle(X(38 + dx), Y(fy + dy), r * k, stroke=0, fill=1)
-        if si == 0:
+        if sys["key"]:
+            sign = "#" if sys["key"] > 0 else "b"
+            for top, clef in ((treble_top, "treble"), (bass_top, "bass")):
+                for i, ln in enumerate(KEY_LINES[clef][sign][:abs(sys["key"])]):
+                    y = top + 4 * SPACE - ln * (SPACE / 2.0)
+                    x = 54 + i * 9
+                    glyph = glyph_sharp(x, y) if sign == "#" else glyph_flat(x, y)
+                    _rl_draw_ops(c, glyph, tr, 0.9)
+        if sys["tsig_x"] is not None:
             c.setFont("Helvetica-Bold", 10)
             for top in (treble_top, bass_top):
-                c.drawCentredString(X(56), Y(top + SPACE + 5) - 3, str(lay["bpb"]))
-                c.drawCentredString(X(56), Y(top + 3 * SPACE + 5) - 3, "4")
+                c.drawCentredString(X(sys["tsig_x"]), Y(top + SPACE + 5) - 3, str(lay["bpb"]))
+                c.drawCentredString(X(sys["tsig_x"]), Y(top + 3 * SPACE + 5) - 3, "4")
         c.setLineWidth(0.9)
-        c.line(X(STAFF_LEFT), Y(treble_top), X(STAFF_LEFT), Y(bass_top + 4 * SPACE))
+        c.line(X(left), Y(treble_top), X(left), Y(bass_top + 4 * SPACE))
         for mi, meas in enumerate(sys["measures"]):
             last_overall = si == n_sys - 1 and mi == len(sys["measures"]) - 1
             x0, mw = meas["x0"], meas["mw"]
@@ -968,7 +1146,9 @@ def to_pdf_bytes(score: Score) -> bytes:
                         c.line(X(h["x"] - 8.5), Y(ly), X(h["x"] + 8.5), Y(ly))
                     if h["acc"] is not None:
                         kind, ax = h["acc"]
-                        glyph = glyph_sharp(ax, h["y"]) if kind == "sharp" else glyph_natural(ax, h["y"])
+                        glyph = {"sharp": glyph_sharp(ax, h["y"]),
+                                 "flat": glyph_flat(ax, h["y"]),
+                                 "natural": glyph_natural(ax, h["y"])}[kind]
                         _rl_draw_ops(c, glyph, tr, 0.9)
                     hollow = h["dur_name"] in ("whole", "half")
                     rx, ry = (6.5 * k, 4.8 * k) if hollow else (6.0 * k, 4.4 * k)
@@ -990,6 +1170,12 @@ def to_pdf_bytes(score: Score) -> bytes:
                         c.setFillGray(0.1)
                 for tie in st["ties"]:
                     _rl_draw_ops(c, [glyph_tie(tie["x1"], tie["y"], tie["x2"], tie["below"])], tr, 0.9)
+                for beam in st["beams"]:
+                    for sp in beam["spans"]:
+                        off = (sp["level"] - 1) * 8
+                        yt = beam["y"] + off - 4.5 if not beam["down"] else beam["y"] - off
+                        c.rect(X(sp["x1"]), Y(yt + 4.5), (sp["x2"] - sp["x1"]) * k, 4.5 * k,
+                               stroke=0, fill=1)
         for cx, cy, sym in _chord_placements(lay, score.chords):
             if sys["y0"] - 30 <= cy <= sys["y0"] + 150:
                 c.setFont("Helvetica-Bold", 8)

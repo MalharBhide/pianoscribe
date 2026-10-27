@@ -29,12 +29,12 @@ Full per-recording numbers: `reports/eval_baseline.json`.
 3. **Beats are estimated**, then measures laid in 4/4. Odd meters, rubato,
    and sharp tempo changes will mis-bar (audible timing stays correct —
    notation only).
-4. **Notation has known gaps**: no key signatures (chromatic sharps with
-   natural cancellations), no beams (flags instead), no tuplet brackets
-   (triplets show plain values), no slurs/dynamics, proportional
-   intra-measure spacing. Rhythm values, rests, ties, chord stems, ledger
-   lines, and time signatures are fully engraved; MusicXML carries
-   pitch/rhythm/voice/type data for real engravers.
+4. **Notation has known gaps**: auto-detected key signature (major only;
+   relative minors share it, correctly); no tuplet brackets (triplets show
+   plain values), no slurs/dynamics, proportional intra-measure spacing.
+   Rhythm values, beamed groups, rests, ties, chord stems, ledger lines,
+   key/time signatures are fully engraved; MusicXML carries
+   pitch/rhythm/voice/type/key data for real engravers.
 5. **PDF mirrors the screen engraving** (same layout engine), not
    publication engraving.
 6. **MIDI merges same-pitch overlaps** (standard MIDI has no per-note

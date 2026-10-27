@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 from . import PROCESSING_VERSION
 from .audio_models import CHORD_TEMPLATES
 from .fingering import suggest_fingering
-from .notation import assign_hands_piano, measure_bounds, quantize
+from .notation import assign_hands_piano, detect_key, measure_bounds, quantize
 from .score import Note, Score, TempoMap, new_id
 
 
@@ -93,6 +93,7 @@ def import_midi_file(path: str, title: str = "") -> Score:
     assign_hands_piano(score)
     quantize(score)
     score.chords = chords_from_notes(score)
+    score.key_fifths = detect_key(score.notes)
     suggest_fingering(score)
     return score
 

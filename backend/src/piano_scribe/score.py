@@ -80,6 +80,7 @@ class Score:
     history: List[Dict[str, Any]] = field(default_factory=list)  # undo stack
     redo_stack: List[Dict[str, Any]] = field(default_factory=list)
     version: int = 1
+    key_fifths: int = 0  # key signature: sharps>0 / flats<0, circle of fifths
 
     # -- serialization -----------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
@@ -95,6 +96,7 @@ class Score:
             "history": self.history[-50:],
             "redo_stack": self.redo_stack[-50:],
             "version": self.version,
+            "key_fifths": self.key_fifths,
         }
 
     @staticmethod
@@ -111,6 +113,7 @@ class Score:
         s.history = list(d.get("history", []))
         s.redo_stack = list(d.get("redo_stack", []))
         s.version = int(d.get("version", 1))
+        s.key_fifths = int(d.get("key_fifths", 0))
         return s
 
     # -- editing (all edits push history; raw_detections never touched) ----

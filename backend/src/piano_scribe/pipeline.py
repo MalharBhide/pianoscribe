@@ -13,7 +13,7 @@ from .audio_ingest import AudioError, iter_windows, load_audio, merge_window_not
 from .audio_models import REGISTRY
 from .config import get_limits
 from .fingering import suggest_fingering
-from .notation import (assign_hands_piano, quantize, render_svg, to_midi_bytes,
+from .notation import (assign_hands_piano, detect_key, quantize, render_svg, to_midi_bytes,
                        to_musicxml, to_pdf_bytes)
 from .score import Note, Score, TempoMap, new_id
 from .store import artifact_dir
@@ -126,6 +126,7 @@ def build_score(audio_path: str, mode: str, density: str, title: str,
     if mode == "piano":
         assign_hands_piano(score)
     quantize(score)
+    score.key_fifths = detect_key(score.notes)
     suggest_fingering(score)
     timing = {"total_sec": round(time.time() - t0, 2),
               "audio_sec": round(info.duration_sec, 2)}

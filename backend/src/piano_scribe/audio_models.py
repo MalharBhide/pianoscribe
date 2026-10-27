@@ -543,8 +543,14 @@ class BaselineArranger(Transcriber):
                         "evidence": {"detected_pitch": b["pitch"],
                                      "detected_start": round(b["start_sec"], 3)}})
         # LH harmony from chord evidence; unknown chords -> rest (no filler).
-        for ch in chords:
+        # Each change is clipped to the NEXT change so fast harmony never
+        # stacks into giant simultaneous clusters.
+        for ci, ch in enumerate(chords):
             if ch["label"] == "unknown":
+                continue
+            hard_end = chords[ci + 1]["start_sec"] if ci + 1 < len(chords) else ch["end_sec"]
+            span_end = min(ch["end_sec"], hard_end)
+            if span_end - ch["start_sec"] < 0.08:
                 continue
             root, cname = ch["root"], ch["label"].split(":")[1]
             ivals = CHORD_TEMPLATES[cname][:3]
@@ -558,10 +564,10 @@ class BaselineArranger(Transcriber):
                 step = min(0.5, max(0.22, dur / 4))
                 t = ch["start_sec"]
                 k = 0
-                while t < ch["end_sec"] - 0.05 and k < 8:
+                while t < span_end - 0.05 and k < 8:
                     p = tones[k % len(tones)] if tones else base
                     out.append({"pitch": p, "start_sec": t,
-                                "end_sec": min(ch["end_sec"], t + step * 0.9),
+                                "end_sec": min(span_end, t + step * 0.9),
                                 "velocity": 62, "hand": "L", "role": "chord",
                                 "provenance": "arranged",
                                 "evidence": {"chord": ch["label"],
@@ -571,7 +577,7 @@ class BaselineArranger(Transcriber):
             else:  # standard: one soft block chord per change
                 for p in tones:
                     out.append({"pitch": p, "start_sec": ch["start_sec"],
-                                "end_sec": min(ch["end_sec"], ch["start_sec"] + max(0.4, dur * 0.8)),
+                                "end_sec": min(span_end, ch["start_sec"] + max(0.4, dur * 0.8)),
                                 "velocity": 58, "hand": "L", "role": "chord",
                                 "provenance": "arranged",
                                 "evidence": {"chord": ch["label"],

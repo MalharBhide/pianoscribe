@@ -141,6 +141,48 @@ def test_svg_ties_across_barline():
     assert " Q " in svg  # tie arc (quadratic curve)
 
 
+def test_beams_group_same_beat_16ths():
+    from piano_scribe.notation import layout_score, quantize
+    s = Score(title="Beams", mode="piano")
+    s.tempo = TempoMap(beats=[], bpm=120.0, beats_per_bar=4)
+    s.notes = [Note(id=f"s{i}", pitch=72 + i, start_sec=i * 0.125, end_sec=i * 0.125 + 0.12, hand="R")
+               for i in range(4)]  # four 16ths in beat 0
+    s.notes.append(Note(id="q", pitch=72, start_sec=1.0, end_sec=1.5, hand="R"))  # quarter beat 2
+    quantize(s)
+    lay = layout_score(s)
+    beams = lay["systems"][0]["measures"][0]["staves"]["R"]["beams"]
+    assert len(beams) == 1
+    assert sorted(sp["level"] for sp in beams[0]["spans"]) == [1, 2]
+    svg = render_svg(s)
+    assert svg.count('height="4.5"') >= 2  # beam rects drawn
+
+
+def test_detect_key_and_spelling():
+    from piano_scribe.notation import KEY_LINES, detect_key, spell
+    d_notes = [Note(id=f"d{i}", pitch=p, start_sec=i, end_sec=i + 1, hand="R")
+               for i, p in enumerate([62, 66, 69, 73, 62, 66])]  # D F# A C#
+    assert detect_key(d_notes) == 2
+    f_notes = [Note(id=f"f{i}", pitch=p, start_sec=i, end_sec=i + 1, hand="R")
+               for i, p in enumerate([65, 69, 70, 65])]  # F A Bb
+    assert detect_key(f_notes) == -1
+    assert detect_key([]) == 0
+    assert spell(58, -1) == ("B", -1, 3)  # Bb in a flat key
+    assert spell(66, 2) == ("F", 1, 4)  # F# in a sharp key
+    for clef in ("treble", "bass"):
+        for sign in ("#", "b"):
+            lines = KEY_LINES[clef][sign]
+            assert len(set(lines)) == 7 and all(0 <= v <= 10 for v in lines)
+
+
+def test_key_signature_renders_and_cancels_accidentals():
+    s = _quantized_score()
+    s.key_fifths = 2  # D major: F#, C# in the signature
+    svg = render_svg(s)
+    assert svg.count('stroke-width="1.4"') >= 4  # 2 sharps x 2 staves
+    xml = to_musicxml(s)
+    assert "<fifths>2</fifths>" in xml
+
+
 def test_musicxml_types_and_tied():
     xml = to_musicxml(_quantized_score())
     root = ET.fromstring(xml)
